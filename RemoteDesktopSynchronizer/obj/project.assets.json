@@ -9965,11 +9965,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\pstojkov\\cernbox\\WINDOWS\\Desktop\\C\\remotedesktopsynchronizer\\RemoteDesktopSynchronizer\\RemoteDesktopSynchronizer\\RemoteDesktopSynchronizer.csproj",
+      "projectUniqueName": "C:\\Users\\pstojkov\\cernbox\\WINDOWS\\Desktop\\C\\RemoteDesktopSynchronizer\\RemoteDesktopSynchronizer\\RemoteDesktopSynchronizer.csproj",
       "projectName": "RemoteDesktopSynchronizer",
-      "projectPath": "C:\\Users\\pstojkov\\cernbox\\WINDOWS\\Desktop\\C\\remotedesktopsynchronizer\\RemoteDesktopSynchronizer\\RemoteDesktopSynchronizer\\RemoteDesktopSynchronizer.csproj",
+      "projectPath": "C:\\Users\\pstojkov\\cernbox\\WINDOWS\\Desktop\\C\\RemoteDesktopSynchronizer\\RemoteDesktopSynchronizer\\RemoteDesktopSynchronizer.csproj",
       "packagesPath": "C:\\Users\\pstojkov\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\pstojkov\\cernbox\\WINDOWS\\Desktop\\C\\remotedesktopsynchronizer\\RemoteDesktopSynchronizer\\RemoteDesktopSynchronizer\\obj\\",
+      "outputPath": "C:\\Users\\pstojkov\\cernbox\\WINDOWS\\Desktop\\C\\RemoteDesktopSynchronizer\\RemoteDesktopSynchronizer\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

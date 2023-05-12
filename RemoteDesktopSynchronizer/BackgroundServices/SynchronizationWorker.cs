@@ -31,7 +31,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
             LoggerSingleton.General.Info("Cleaner Worker is starting.");
             var gateways = AppConfig.GetGatewaysInUse();
             stoppingToken.Register(() => LoggerSingleton.General.Info("CleanerWorker background task is stopping."));
-            //while (!stoppingToken.IsCancellationRequested)
+            //while (!stoppingToken.IsCancellationRequested) 
             //{
                 try
                 {

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "fQF278+/KNlNih5yQxDKPQeqGxEY+RlVp+2/fgrsjoLvETfSWb8wFC7G3KlaAuKo/0wWKAH9N7gcMujw13PbKA==",
+  "dgSpecHash": "vZZc4KfCmJUMdjK8jNbukdhoMrQrrmvyPGjVDVs47DNeGW7Y1Ln0cuba3D6Qbc5XPMpgAti+23DuRCRzav1Tvg==",
   "success": true,
-  "projectFilePath": "C:\\Users\\pstojkov\\cernbox\\WINDOWS\\Desktop\\C\\remotedesktopsynchronizer\\RemoteDesktopSynchronizer\\RemoteDesktopSynchronizer\\RemoteDesktopSynchronizer.csproj",
+  "projectFilePath": "C:\\Users\\pstojkov\\cernbox\\WINDOWS\\Desktop\\C\\RemoteDesktopSynchronizer\\RemoteDesktopSynchronizer\\RemoteDesktopSynchronizer.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\pstojkov\\.nuget\\packages\\bouncycastle.netcore\\1.8.5\\bouncycastle.netcore.1.8.5.nupkg.sha512",
     "C:\\Users\\pstojkov\\.nuget\\packages\\cliwrap\\3.6.1\\cliwrap.3.6.1.nupkg.sha512",
