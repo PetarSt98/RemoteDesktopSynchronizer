@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
-using RemoteDesktopCleaner.Data;
-using RemoteDesktopCleaner.Loggers;
+using SynchronizerLibrary.Data;
+using SynchronizerLibrary.Loggers;
+using SynchronizerLibrary.CommonServices;
 
 
 namespace RemoteDesktopCleaner.BackgroundServices
@@ -29,7 +30,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
 
                 LoggerSingleton.General.Info($"Finished getting gateway RAP names for '{serverName}'.");
 
-                _gatewayRapSynchronizer.SynchronizeRaps(serverName, changedLocalGroups.LocalGroupsToAdd.Where(lg => lg.Name.StartsWith("LG-")).Select(lg => lg.Name).ToList());
+                _gatewayRapSynchronizer.SynchronizeRaps(serverName, changedLocalGroups.LocalGroupsToAdd.Where(lg => lg.Name.StartsWith("LG-")).Select(lg => lg.Name).ToList(), new List<string>(), new List<string>());
 
                 LoggerSingleton.General.Info("Finished synchronization");
             }

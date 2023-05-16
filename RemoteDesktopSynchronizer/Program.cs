@@ -2,7 +2,9 @@
 using RemoteDesktopCleaner.BackgroundServices;
 using Unity.Lifetime;
 using RemoteDesktopCleaner.Exceptions;
-using RemoteDesktopCleaner.Loggers;
+using SynchronizerLibrary.Loggers;
+using SynchronizerLibrary.CommonServices;
+
 
 namespace RemoteDesktopCleaner
 {
@@ -30,7 +32,6 @@ namespace RemoteDesktopCleaner
         private static void ConfigureServices(UnityContainer container)
         {
             //LoggerSingleton.General.Info($"Configuring services");
-            //container.RegisterType<IConfigValidator, ConfigValidator>(new HierarchicalLifetimeManager());
             container.RegisterType<IGatewayRapSynchronizer, GatewayRapSynchronizer>(new HierarchicalLifetimeManager());
             container.RegisterType<ISynchronizer, Synchronizer>(new HierarchicalLifetimeManager());
             container.RegisterType<IGatewayLocalGroupSynchronizer, GatewayLocalGroupSynchronizer>(new HierarchicalLifetimeManager());

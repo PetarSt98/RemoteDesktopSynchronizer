@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using RemoteDesktopCleaner.Data;
+using SynchronizerLibrary.Data;
+using SynchronizerLibrary.CommonServices;
+
 
 namespace RemoteDesktopCleaner.BackgroundServices
 {

@@ -382,3 +382,12 @@ C:\Users\pstojkov\cernbox\WINDOWS\Desktop\C\RemoteDesktopSynchronizer\RemoteDesk
 C:\Users\pstojkov\cernbox\WINDOWS\Desktop\C\RemoteDesktopSynchronizer\RemoteDesktopSynchronizer\obj\Debug\net6.0\RemoteDesktopSynchronizer.pdb
 C:\Users\pstojkov\cernbox\WINDOWS\Desktop\C\RemoteDesktopSynchronizer\RemoteDesktopSynchronizer\obj\Debug\net6.0\RemoteDesktopSynchronizer.genruntimeconfig.cache
 C:\Users\pstojkov\cernbox\WINDOWS\Desktop\C\RemoteDesktopSynchronizer\RemoteDesktopSynchronizer\obj\Debug\net6.0\ref\RemoteDesktopSynchronizer.dll
+C:\Users\pstojkov\cernbox\WINDOWS\Desktop\C\RemoteDesktopSynchronizer\RemoteDesktopSynchronizer\bin\Debug\net6.0\SynchronizerLibrary.dll
+C:\Users\pstojkov\cernbox\WINDOWS\Desktop\C\RemoteDesktopSynchronizer\RemoteDesktopSynchronizer\bin\Debug\net6.0\SynchronizerLibrary.pdb
+C:\Users\pstojkov\cernbox\WINDOWS\Desktop\C\RemoteDesktopSynchronizer\RemoteDesktopSynchronizer\bin\Debug\net6.0\System.Web.Http.SelfHost.dll
+C:\Users\pstojkov\cernbox\WINDOWS\Desktop\C\RemoteDesktopSynchronizer\RemoteDesktopSynchronizer\bin\Debug\net6.0\Microsoft.AspNetCore.Cors.dll
+C:\Users\pstojkov\cernbox\WINDOWS\Desktop\C\RemoteDesktopSynchronizer\RemoteDesktopSynchronizer\bin\Debug\net6.0\Microsoft.AspNetCore.Http.Abstractions.dll
+C:\Users\pstojkov\cernbox\WINDOWS\Desktop\C\RemoteDesktopSynchronizer\RemoteDesktopSynchronizer\bin\Debug\net6.0\Microsoft.AspNetCore.Http.Extensions.dll
+C:\Users\pstojkov\cernbox\WINDOWS\Desktop\C\RemoteDesktopSynchronizer\RemoteDesktopSynchronizer\bin\Debug\net6.0\Microsoft.AspNetCore.Http.Features.dll
+C:\Users\pstojkov\cernbox\WINDOWS\Desktop\C\RemoteDesktopSynchronizer\RemoteDesktopSynchronizer\bin\Debug\net6.0\Microsoft.Net.Http.Headers.dll
+C:\Users\pstojkov\cernbox\WINDOWS\Desktop\C\RemoteDesktopSynchronizer\RemoteDesktopSynchronizer\bin\Debug\net6.0\SynchronizerLibrary.dll.config

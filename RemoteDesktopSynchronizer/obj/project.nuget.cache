@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "vZZc4KfCmJUMdjK8jNbukdhoMrQrrmvyPGjVDVs47DNeGW7Y1Ln0cuba3D6Qbc5XPMpgAti+23DuRCRzav1Tvg==",
+  "dgSpecHash": "aJQju2YA50jXBo6m/ap/UxshgLipto6zo2Exz4jgGDz0qCF++kgUKPn143IuJjVwZqYq08trmJmTCi0BZN5K5g==",
   "success": true,
   "projectFilePath": "C:\\Users\\pstojkov\\cernbox\\WINDOWS\\Desktop\\C\\RemoteDesktopSynchronizer\\RemoteDesktopSynchronizer\\RemoteDesktopSynchronizer.csproj",
   "expectedPackageFiles": [
@@ -16,6 +16,11 @@
     "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.aspnet.webapi.client\\5.2.9\\microsoft.aspnet.webapi.client.5.2.9.nupkg.sha512",
     "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.aspnet.webapi.core\\5.2.9\\microsoft.aspnet.webapi.core.5.2.9.nupkg.sha512",
     "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.aspnet.webapi.cors\\5.2.9\\microsoft.aspnet.webapi.cors.5.2.9.nupkg.sha512",
+    "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.aspnet.webapi.selfhost\\5.2.9\\microsoft.aspnet.webapi.selfhost.5.2.9.nupkg.sha512",
+    "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.aspnetcore.cors\\2.2.0\\microsoft.aspnetcore.cors.2.2.0.nupkg.sha512",
+    "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.aspnetcore.http.abstractions\\2.2.0\\microsoft.aspnetcore.http.abstractions.2.2.0.nupkg.sha512",
+    "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.aspnetcore.http.extensions\\2.2.0\\microsoft.aspnetcore.http.extensions.2.2.0.nupkg.sha512",
+    "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.aspnetcore.http.features\\2.2.0\\microsoft.aspnetcore.http.features.2.2.0.nupkg.sha512",
     "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.csharp\\4.7.0\\microsoft.csharp.4.7.0.nupkg.sha512",
     "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.data.sqlclient\\1.0.19269.1\\microsoft.data.sqlclient.1.0.19269.1.nupkg.sha512",
     "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.entityframeworkcore\\7.0.5\\microsoft.entityframeworkcore.7.0.5.nupkg.sha512",
@@ -54,6 +59,7 @@
     "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.management.infrastructure\\2.0.0\\microsoft.management.infrastructure.2.0.0.nupkg.sha512",
     "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.management.infrastructure.runtime.unix\\2.0.0\\microsoft.management.infrastructure.runtime.unix.2.0.0.nupkg.sha512",
     "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.management.infrastructure.runtime.win\\2.0.0\\microsoft.management.infrastructure.runtime.win.2.0.0.nupkg.sha512",
+    "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.net.http.headers\\2.2.0\\microsoft.net.http.headers.2.2.0.nupkg.sha512",
     "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.netcore.platforms\\2.0.0\\microsoft.netcore.platforms.2.0.0.nupkg.sha512",
     "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.netcore.targets\\1.1.0\\microsoft.netcore.targets.1.1.0.nupkg.sha512",
     "C:\\Users\\pstojkov\\.nuget\\packages\\microsoft.powershell.coreclr.eventing\\7.2.11\\microsoft.powershell.coreclr.eventing.7.2.11.nupkg.sha512",
@@ -214,6 +220,16 @@
       "warningLevel": 1,
       "message": "Package 'Microsoft.AspNet.WebApi.Cors 5.2.9' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8' instead of the project target framework 'net6.0'. This package may not be fully compatible with your project.",
       "libraryId": "Microsoft.AspNet.WebApi.Cors",
+      "targetGraphs": [
+        "net6.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'Microsoft.AspNet.WebApi.SelfHost 5.2.9' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8' instead of the project target framework 'net6.0'. This package may not be fully compatible with your project.",
+      "libraryId": "Microsoft.AspNet.WebApi.SelfHost",
       "targetGraphs": [
         "net6.0"
       ]

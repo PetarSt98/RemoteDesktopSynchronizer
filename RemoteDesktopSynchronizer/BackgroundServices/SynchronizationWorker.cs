@@ -1,8 +1,9 @@
 ﻿using Microsoft.Extensions.Hosting;
 using RemoteDesktopCleaner.Exceptions;
 using System.Diagnostics;
-using RemoteDesktopCleaner.Loggers;
-using RemoteDesktopCleaner.Data;
+using SynchronizerLibrary.Loggers;
+using SynchronizerLibrary.Data;
+using SynchronizerLibrary.CommonServices;
 
 
 namespace RemoteDesktopCleaner.BackgroundServices
@@ -101,7 +102,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
             var results = new List<rap>();
             try
             {
-                results.AddRange(db.raps.Include("rap_resource").Where(r => r.synchronized == false).ToList());
+                results.AddRange(db.raps.Include("rap_resource").ToList());
             }
             catch (Exception)
             {
