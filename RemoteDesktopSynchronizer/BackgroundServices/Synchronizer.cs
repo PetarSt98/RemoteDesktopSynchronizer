@@ -89,6 +89,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
             var unsynchronizedRaps = raps
                                     .Where(r => r.synchronized == false || r.rap_resource.Any(rr => rr.synchronized == false))
                                     .ToList();
+
             var localGroups = new List<LocalGroup>();
             var validRaps = unsynchronizedRaps.Where(IsRapValid);
             foreach (var rap in validRaps)

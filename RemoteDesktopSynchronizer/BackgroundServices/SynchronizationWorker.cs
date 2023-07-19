@@ -25,7 +25,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
         {
             _synchronizer = synchronizer;
             //_configValidator = configValidator;
-        }
+       }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -40,18 +40,10 @@ namespace RemoteDesktopCleaner.BackgroundServices
                 using (var context = new RapContext())
                 {
                     raps.AddRange(GetRaps(context));
-                    var unsynchronizedRaps = context.raps
+
+                    var unsynchronizedRaps = raps
                                             .Where(r => r.synchronized == false || r.rap_resource.Any(rr => rr.synchronized == false))
                                             .ToList();
-                    //var unsynchronizedRaps = context.raps.Where(r => r.synchronized == false).ToList();
-
-                    //var synchronizedRapsunsynchronizedRapResources = context.raps.Where(r => r.synchronized == false).ToList();
-
-                    //var unsynchronizedLogs = context.synchronized_rap
-                    //                        .Where(r => r != null && r.success == false)
-                    //                        .ToList();
-
-
 
                     _synchronizer.SynchronizeAsync("cerngt01", unsynchronizedRaps);
 
@@ -111,41 +103,5 @@ namespace RemoteDesktopCleaner.BackgroundServices
             }
             return results;
         }
-
-        private readonly string source_username = @"CERN\pstojkov";
-        private readonly string source_password = "GeForce9800GT.";
-        private readonly string target_hostname = "dbod-remotedesktop.cern.ch";
-        private readonly string target_username = "admin";
-        private readonly string target_password = "oUgDdp5AnSzrvizXtN";
-        private readonly string target_database = "RemoteDesktop";
-        private readonly string target_port = "5500";
-
-        private void CloneSQL2MySQLdb()
-        {
-            LoggerSingleton.General.Info("Started cloning RemoteDesktop database as MySQL database.");
-            string scriptPath = $@"{Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName}\PowerShellScripts\database_copy_SQL2MySQL.ps1";
-            ProcessStartInfo startInfo = new ProcessStartInfo
-            {
-                FileName = "powershell.exe",
-                Arguments = $"-ExecutionPolicy Bypass -File \"{scriptPath}\" -source_username \"{source_username}\" -source_password \"{source_password}\" -target_hostname \"{target_hostname}\" -target_username \"{target_username}\" -target_password \"{target_password}\" -target_database \"{target_database}\" -target_port \"{target_port}\" -Add_toDelete_column",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using Process process = new Process { StartInfo = startInfo };
-            process.Start();
-
-            string errors = process.StandardError.ReadToEnd();
-            if (errors.Length > 0)
-            {
-                LoggerSingleton.General.Fatal("Failed cloning RemoteDesktop database as MySQL database.");
-                throw new CloningException();
-            }
-            process.WaitForExit();
-            LoggerSingleton.General.Info("Successful cloning RemoteDesktop database as MySQL database.");
-        }
-
     }
 }
