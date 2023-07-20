@@ -1,6 +1,5 @@
-﻿using Unity;
+﻿using Microsoft.Extensions.DependencyInjection;
 using RemoteDesktopCleaner.BackgroundServices;
-using Unity.Lifetime;
 using RemoteDesktopCleaner.Exceptions;
 using SynchronizerLibrary.Loggers;
 using SynchronizerLibrary.CommonServices;
@@ -19,25 +18,29 @@ namespace RemoteDesktopCleaner
                 LoggerSingleton.General.Info($"Starting RemoteDesktopClearner console app");
                 Console.WriteLine("Starting sychronizer");
                 LoggerSingleton.General.Info("Starting sychronizer");
-                UnityContainer container = new UnityContainer();
 
-                LoggerSingleton.General.Info("Configuring services");
-                Console.WriteLine("Configuring services");
-                ConfigureServices(container);
+                // Configure services
+                var serviceProvider = ConfigureServices();
 
                 LoggerSingleton.General.Info("Setting up workers");
                 Console.WriteLine("Setting up workers");
-                SynchronizationWorker cw = container.Resolve<SynchronizationWorker>();
+                var cw = serviceProvider.GetService<SynchronizationWorker>();
 
+                if (cw == null)
+                {
+                    LoggerSingleton.General.Error("Failed to resolve SynchronizationWorker from the DI container.");
+                    Console.WriteLine("Failed to resolve SynchronizationWorker from the DI container.");
+                    return;
+                }
 
                 LoggerSingleton.General.Info("Starting initial synchronization");
                 Console.WriteLine("Starting initial synchronization");
-                cw.StartAsync(new CancellationToken());
-                Console.WriteLine("Finished sychronizing");
-                LoggerSingleton.General.Info("Finished sychronizing");
+                cw.StartAsync(CancellationToken.None).Wait();
+                Console.WriteLine("Finished synchronizing");
+                LoggerSingleton.General.Info("Finished synchronizing");
 
-                Console.WriteLine("Starting scheduled sychronizer");
-                LoggerSingleton.General.Info("Starting scheduled sychronizer");
+                Console.WriteLine("Starting scheduled synchronizer");
+                LoggerSingleton.General.Info("Starting scheduled synchronizer");
                 System.Timers.Timer timer = new System.Timers.Timer(5 * 60 * 1000);
                 bool isFirstTime = true;
 
@@ -48,14 +51,18 @@ namespace RemoteDesktopCleaner
                         isFirstTime = false;
                         return; // Skip running StartAsync on the first elapsed event
                     }
-                    Console.WriteLine("Starting sychronizer");
-                    LoggerSingleton.General.Info("Starting sychronizer");
-                    cw.StartAsync(new CancellationToken());
-                    Console.WriteLine("Finished sychronizing");
-                    LoggerSingleton.General.Info("Finished sychronizing");
+                    Console.WriteLine("Starting synchronizer");
+                    LoggerSingleton.General.Info("Starting synchronizer");
+                    cw.StartAsync(CancellationToken.None).Wait();
+                    Console.WriteLine("Finished synchronizing");
+                    LoggerSingleton.General.Info("Finished synchronizing");
                 };
 
                 timer.Start();
+
+                // Keep the application running
+                Console.WriteLine("Press any key to exit.");
+                Console.ReadKey();
             }
             catch (Exception ex)
             {
@@ -64,13 +71,22 @@ namespace RemoteDesktopCleaner
             }
         }
 
-        private static void ConfigureServices(UnityContainer container)
+        private static IServiceProvider ConfigureServices()
         {
-            LoggerSingleton.General.Info($"Configuring services");
-            container.RegisterType<IGatewayRapSynchronizer, GatewayRapSynchronizer>(new HierarchicalLifetimeManager());
-            container.RegisterType<ISynchronizer, Synchronizer>(new HierarchicalLifetimeManager());
-            container.RegisterType<IGatewayLocalGroupSynchronizer, GatewayLocalGroupSynchronizer>(new HierarchicalLifetimeManager());
-            container.RegisterType<SynchronizationWorker>(new HierarchicalLifetimeManager());
+            var services = new ServiceCollection();
+
+            LoggerSingleton.General.Info("Configuring services");
+
+            // Register services and dependencies
+            services.AddSingleton<IGatewayRapSynchronizer, GatewayRapSynchronizer>();
+            services.AddSingleton<ISynchronizer, Synchronizer>();
+            services.AddSingleton<IGatewayLocalGroupSynchronizer, GatewayLocalGroupSynchronizer>();
+            services.AddSingleton<SynchronizationWorker>();
+
+            // Build the service provider
+            var serviceProvider = services.BuildServiceProvider();
+
+            return serviceProvider;
         }
     }
 }
