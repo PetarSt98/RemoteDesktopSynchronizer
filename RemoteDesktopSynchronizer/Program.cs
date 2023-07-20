@@ -20,12 +20,18 @@ namespace RemoteDesktopCleaner
                 Console.WriteLine("Starting sychronizer");
                 LoggerSingleton.General.Info("Starting sychronizer");
                 UnityContainer container = new UnityContainer();
+
+                LoggerSingleton.General.Info("Configuring services");
+                Console.WriteLine("Configuring services");
                 ConfigureServices(container);
 
+                LoggerSingleton.General.Info("Setting up workers");
+                Console.WriteLine("Setting up workers");
                 SynchronizationWorker cw = container.Resolve<SynchronizationWorker>();
 
 
-                // Call immediately for the first time
+                LoggerSingleton.General.Info("Starting initial synchronization");
+                Console.WriteLine("Starting initial synchronization");
                 cw.StartAsync(new CancellationToken());
                 Console.WriteLine("Finished sychronizing");
                 LoggerSingleton.General.Info("Finished sychronizing");
