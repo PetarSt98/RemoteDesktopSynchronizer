@@ -1,11 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using RemoteDesktopCleaner.BackgroundServices;
-using RemoteDesktopCleaner.Exceptions;
 using SynchronizerLibrary.Loggers;
 using SynchronizerLibrary.CommonServices;
-using System;
-using System.Threading;
-using System.Timers;
+
 
 namespace RemoteDesktopCleaner
 {
@@ -39,30 +36,7 @@ namespace RemoteDesktopCleaner
                 Console.WriteLine("Finished synchronizing");
                 LoggerSingleton.General.Info("Finished synchronizing");
 
-                Console.WriteLine("Starting scheduled synchronizer");
-                LoggerSingleton.General.Info("Starting scheduled synchronizer");
-                System.Timers.Timer timer = new System.Timers.Timer(5 * 60 * 1000);
-                bool isFirstTime = true;
 
-                timer.Elapsed += (sender, e) =>
-                {
-                    if (isFirstTime)
-                    {
-                        isFirstTime = false;
-                        return; // Skip running StartAsync on the first elapsed event
-                    }
-                    Console.WriteLine("Starting synchronizer");
-                    LoggerSingleton.General.Info("Starting synchronizer");
-                    cw.StartAsync(CancellationToken.None).Wait();
-                    Console.WriteLine("Finished synchronizing");
-                    LoggerSingleton.General.Info("Finished synchronizing");
-                };
-
-                timer.Start();
-
-                // Keep the application running
-                Console.WriteLine("Press any key to exit.");
-                Console.ReadKey();
             }
             catch (Exception ex)
             {

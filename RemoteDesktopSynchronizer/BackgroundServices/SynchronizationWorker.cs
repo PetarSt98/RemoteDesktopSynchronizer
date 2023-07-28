@@ -4,6 +4,7 @@ using System.Diagnostics;
 using SynchronizerLibrary.Loggers;
 using SynchronizerLibrary.Data;
 using SynchronizerLibrary.CommonServices;
+using SynchronizerLibrary.DataBuffer;
 
 
 namespace RemoteDesktopCleaner.BackgroundServices
@@ -44,11 +45,20 @@ namespace RemoteDesktopCleaner.BackgroundServices
                     var unsynchronizedRaps = raps
                                             .Where(r => r.synchronized == false || r.rap_resource.Any(rr => rr.synchronized == false))
                                             .ToList();
+                    var gatewaysToSynchronize = new List<string> { "cerngt01" };
 
-                    _synchronizer.SynchronizeAsync("cerngt01", unsynchronizedRaps);
+                    foreach (var gatewayName in gatewaysToSynchronize)
+                    {
 
-          
-                    UpdateDatabase(context);
+                        GlobalInstance.Instance.Names.Add(gatewayName);
+                        GlobalInstance.Instance.ObjectLists[gatewayName] = new List<RAP_ResourceStatus>();
+                        _synchronizer.SynchronizeAsync(gatewayName, unsynchronizedRaps);
+                    }
+
+                    DatabaseSynchronizator databaseSynchronizator = new DatabaseSynchronizator();
+                    databaseSynchronizator.AverageGatewayReults();
+                    databaseSynchronizator.UpdateDatabase();
+
                 }
                 //break;
             }
@@ -70,24 +80,6 @@ namespace RemoteDesktopCleaner.BackgroundServices
             //}
         }
 
-        static public void UpdateDatabase(RapContext db)
-        {
-            LoggerSingleton.General.Info("Saving changes into database (marked raps/rap_resources to be deleted)");
-            LoggerSingleton.Raps.Info("Saving changes into database (marked raps/rap_resources to be deleted)");
-
-            db.SaveChanges();
-
-            var rapsToDelete = db.raps.Where(r => r.toDelete == true).ToList();
-            db.raps.RemoveRange(rapsToDelete);
-
-            var rapResourcesToDelete = db.rap_resource.Where(rr => rr.toDelete == true).ToList();
-            db.rap_resource.RemoveRange(rapResourcesToDelete);
-
-            LoggerSingleton.General.Info("Deleting obsolete RAPs and RAP_Resources from MySQL database");
-            LoggerSingleton.Raps.Info("Deleting obsolete RAPs and RAP_Resources from MySQL database");
-
-            db.SaveChanges();
-        }
 
         private IEnumerable<rap> GetRaps(RapContext db)
         {
