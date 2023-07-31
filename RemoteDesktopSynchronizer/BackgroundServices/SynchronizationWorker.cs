@@ -38,13 +38,8 @@ namespace RemoteDesktopCleaner.BackgroundServices
                 try
                 {
                 var raps = new List<rap>();
-                using (var context = new RapContext())
-                {
-                    raps.AddRange(GetRaps(context));
 
-                    var unsynchronizedRaps = raps
-                                            .Where(r => r.synchronized == false || r.rap_resource.Any(rr => rr.synchronized == false))
-                                            .ToList();
+
                     var gatewaysToSynchronize = new List<string> { "cerngt01" };
 
                     foreach (var gatewayName in gatewaysToSynchronize)
@@ -52,14 +47,14 @@ namespace RemoteDesktopCleaner.BackgroundServices
 
                         GlobalInstance.Instance.Names.Add(gatewayName);
                         GlobalInstance.Instance.ObjectLists[gatewayName] = new List<RAP_ResourceStatus>();
-                        _synchronizer.SynchronizeAsync(gatewayName, unsynchronizedRaps);
+                        _synchronizer.SynchronizeAsync(gatewayName);
                     }
 
                     DatabaseSynchronizator databaseSynchronizator = new DatabaseSynchronizator();
                     databaseSynchronizator.AverageGatewayReults();
                     databaseSynchronizator.UpdateDatabase();
 
-                }
+                
                 //break;
             }
                 catch (OperationCanceledException)

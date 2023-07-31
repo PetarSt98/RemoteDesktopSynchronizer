@@ -17,13 +17,13 @@ namespace RemoteDesktopCleaner.BackgroundServices
             _gatewayRapSynchronizer = gatewayRapSynchronizer;
         }
 
-        public async void SynchronizeAsync(string serverName, List<rap> unsynchronizedRap)
+        public async void SynchronizeAsync(string serverName)
         {
             try
             {
                 LoggerSingleton.General.Info($"Starting the synchronization of '{serverName}' gateway.");
 
-                var cfgDiscrepancy = GetConfigDiscrepancy(serverName);
+                var cfgDiscrepancy = GetConfigDiscrepancy();
                 var changedLocalGroups = FilterChangedLocalGroups(cfgDiscrepancy.LocalGroups);
 
                 var addedGroups = _gatewayLocalGroupSynchronizer.SyncLocalGroups(changedLocalGroups, serverName);
@@ -42,7 +42,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
             LoggerSingleton.General.Info($"Finished synchronization for gateway '{serverName}'.");
         }
 
-        private GatewayConfig GetConfigDiscrepancy(string serverName)
+        private GatewayConfig GetConfigDiscrepancy()
         {
             LoggerSingleton.General.Info("Started comparing Local Groups and members from database and server");
             GatewayConfig modelCfgUnsychronized = ReadUnsychronizedConfigDbModel();
@@ -87,7 +87,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
             LoggerSingleton.General.Info("Getting valid config model.");
             var raps = GetRaps();
             var unsynchronizedRaps = raps
-                                    .Where(r => r.synchronized == false || r.rap_resource.Any(rr => rr.synchronized == false))
+                                    .Where(r => !r.toDelete && (r.synchronized == false || r.rap_resource.Any(rr => (rr.synchronized == false && !rr.toDelete))))
                                     .ToList();
 
             var localGroups = new List<LocalGroup>();
