@@ -360,3 +360,10 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+RemoteDesktopSynchronizer/bin/
+RemoteDesktopSynchronizer/bin/*
+RemoteDesktopSynchronizer/obj/
+RemoteDesktopSynchronizer/obj/*
+.vs/
+/.vs
+.vs
