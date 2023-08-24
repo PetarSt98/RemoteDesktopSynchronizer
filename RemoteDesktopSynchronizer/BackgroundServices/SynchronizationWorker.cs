@@ -5,10 +5,13 @@ using SynchronizerLibrary.Loggers;
 using SynchronizerLibrary.Data;
 using SynchronizerLibrary.CommonServices;
 using SynchronizerLibrary.DataBuffer;
+using System.DirectoryServices;
 
 
 namespace RemoteDesktopCleaner.BackgroundServices
 {
+
+
     public enum ObjectClass
     {
         User,
@@ -26,10 +29,11 @@ namespace RemoteDesktopCleaner.BackgroundServices
         {
             _synchronizer = synchronizer;
             //_configValidator = configValidator;
-       }
+        }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+
             LoggerSingleton.General.Info("Cleaner Worker is starting.");
             var gateways = AppConfig.GetGatewaysInUse();
             stoppingToken.Register(() => LoggerSingleton.General.Info("CleanerWorker background task is stopping."));
@@ -54,7 +58,12 @@ namespace RemoteDesktopCleaner.BackgroundServices
                     databaseSynchronizator.AverageGatewayReults();
                     databaseSynchronizator.UpdateDatabase();
 
-                
+                    using (var db = new RapContext())
+                    {
+                        UpdateDatabase(db);
+                    }
+
+
                 //break;
             }
                 catch (OperationCanceledException)
@@ -74,7 +83,21 @@ namespace RemoteDesktopCleaner.BackgroundServices
                 }
             //}
         }
+        static public void UpdateDatabase(RapContext db)
+        {
+            LoggerSingleton.General.Info("Saving changes into database (marked raps/rap_resources to be deleted)");
+            LoggerSingleton.Raps.Info("Saving changes into database (marked raps/rap_resources to be deleted)");
 
+            db.SaveChanges();
+
+            var rapResourcesToDelete = db.rap_resource.Where(rr => rr.toDelete == true).ToList();
+            db.rap_resource.RemoveRange(rapResourcesToDelete);
+
+            LoggerSingleton.General.Info("Deleting obsolete RAPs and RAP_Resources from MySQL database");
+            LoggerSingleton.Raps.Info("Deleting obsolete RAPs and RAP_Resources from MySQL database");
+
+            db.SaveChanges();
+        }
 
         private IEnumerable<rap> GetRaps(RapContext db)
         {

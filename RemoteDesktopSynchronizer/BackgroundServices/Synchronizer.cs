@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using SynchronizerLibrary.Data;
+﻿using SynchronizerLibrary.Data;
 using SynchronizerLibrary.Loggers;
 using SynchronizerLibrary.CommonServices;
 
@@ -45,15 +44,25 @@ namespace RemoteDesktopCleaner.BackgroundServices
         private GatewayConfig GetConfigDiscrepancy()
         {
             LoggerSingleton.General.Info("Started comparing Local Groups and members from database and server");
-            GatewayConfig modelCfgUnsychronized = ReadUnsychronizedConfigDbModel();
             var result = new List<LocalGroup>();
-            foreach (var modelLocalGroup in modelCfgUnsychronized.LocalGroups)
+
+            GatewayConfig modelCfgUnsychronizedAdd = ReadUnsychronizedConfigDbModelAdd();
+            foreach (var modelLocalGroup in modelCfgUnsychronizedAdd.LocalGroups)
             {
                 var lg = new LocalGroup(modelLocalGroup.Name, LocalGroupFlag.Add);
-                lg.ComputersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Computers, new List<string>()));
-                lg.MembersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Members, new List<string>()));
+                lg.ComputersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Computers, true));
+                lg.MembersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Members, true));
                 result.Add(lg);
             }
+            GatewayConfig modelCfgUnsychronizedDelete = ReadUnsychronizedConfigDbModelDelete();
+            foreach (var modelLocalGroup in modelCfgUnsychronizedDelete.LocalGroups)
+            {
+                var lg = new LocalGroup(modelLocalGroup.Name, LocalGroupFlag.CheckForUpdate);
+                lg.ComputersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Computers, false));
+                lg.MembersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Members, true));
+                result.Add(lg);
+            }
+
             var diff = new GatewayConfig("cerngt01");
             diff.Add(result);
             return diff;
@@ -71,31 +80,34 @@ namespace RemoteDesktopCleaner.BackgroundServices
             return groupsToSync;
         }
 
-        private LocalGroupContent GetListDiscrepancyTest(ICollection<string> modelList, ICollection<string> otherList)
+        private LocalGroupContent GetListDiscrepancyTest(ICollection<string> modelList, bool addOrDeleteFlag)
         {
 
             var flags = new List<LocalGroupFlag>();
             var names = new List<string>();
-            flags.AddRange(from el in modelList select LocalGroupFlag.Add);
+            if (addOrDeleteFlag)
+                flags.AddRange(from el in modelList select LocalGroupFlag.Add);
+            else
+                flags.AddRange(from el in modelList select LocalGroupFlag.Delete);
             names.AddRange(from el in modelList select el.ToLower());
 
             return new LocalGroupContent(names, flags);
         }
 
-        public GatewayConfig ReadUnsychronizedConfigDbModel()
+        public GatewayConfig ReadUnsychronizedConfigDbModelAdd()
         {
             LoggerSingleton.General.Info("Getting valid config model.");
             var raps = GetRaps();
             var unsynchronizedRaps = raps
-                                    .Where(r => !r.toDelete && (r.synchronized == false || r.rap_resource.Any(rr => (rr.synchronized == false && !rr.toDelete))))
-                                    .ToList();
+                        .Where(r => !r.toDelete && (r.synchronized == false || r.rap_resource.Any(rr => (rr.synchronized == false && !rr.toDelete))))
+                        .ToList();
 
             var localGroups = new List<LocalGroup>();
             var validRaps = unsynchronizedRaps.Where(IsRapValid);
             foreach (var rap in validRaps)
             {
                 var owner = rap.login;
-                var resources = rap.rap_resource.Where(IsResourceValid)
+                var resources = rap.rap_resource.Where(IsResourceValid).Where(r => !r.synchronized)
                     .Select(resource => $"{resource.resourceName}$").ToList();
                 resources.Add(owner);
                 var lg = new LocalGroup(rap.resourceGroupName, resources);
@@ -105,18 +117,26 @@ namespace RemoteDesktopCleaner.BackgroundServices
             return gatewayModel;
         }
 
-
-        private void SaveToFile(GatewayConfig diff)
+        public GatewayConfig ReadUnsychronizedConfigDbModelDelete()
         {
-            try
+            LoggerSingleton.General.Info("Getting valid config model.");
+            var raps = GetRaps();
+            var unsynchronizedRaps = raps
+                                    .Where(r => !r.toDelete && r.rap_resource.Any(rr => rr.toDelete))
+                                    .ToList();
+
+            var localGroups = new List<LocalGroup>();
+            foreach (var rap in unsynchronizedRaps)
             {
-                var path = AppConfig.GetInfoDir() + @"\" + diff.ServerName + "-diff.json";
-                File.WriteAllText(path, JsonSerializer.Serialize(diff));
+                var owner = rap.login;
+                var resources = rap.rap_resource.Where(IsResourceRemovable)
+                    .Select(resource => $"{resource.resourceName}$").ToList();
+                resources.Add(owner);
+                var lg = new LocalGroup(rap.resourceGroupName, resources);
+                localGroups.Add(lg);
             }
-            catch (Exception ex)
-            {
-                LoggerSingleton.General.Warn($"{ex.ToString()} Failed saving gateway: '{diff.ServerName}' discrepancy config to file.");
-            }
+            var gatewayModel = new GatewayConfig("MODEL", localGroups);
+            return gatewayModel;
         }
 
         public IEnumerable<rap> GetRaps()
@@ -148,14 +168,10 @@ namespace RemoteDesktopCleaner.BackgroundServices
             return !resource.toDelete && resource.invalid.HasValue && !resource.invalid.Value;
         }
 
-        private bool IsRapInvalid(rap rap)
+        private bool IsResourceRemovable(rap_resource resource)
         {
-            return rap.toDelete;
+            return resource.toDelete;
         }
-
-        private bool IsResourceInvalid(rap_resource resource)
-        {
-            return resource.toDelete || !resource.invalid.HasValue || resource.invalid.Value;
-        }
+        
     }
 }
