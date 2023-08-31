@@ -50,7 +50,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
                     {
 
                         GlobalInstance.Instance.Names.Add(gatewayName);
-                        GlobalInstance.Instance.ObjectLists[gatewayName] = new List<RAP_ResourceStatus>();
+                        GlobalInstance.Instance.ObjectLists[gatewayName] = new Dictionary<string, RAP_ResourceStatus>();
                         _synchronizer.SynchronizeAsync(gatewayName);
                     }
 
