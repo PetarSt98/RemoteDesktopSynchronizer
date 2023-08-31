@@ -3,11 +3,6 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
-RemoteDesktopSynchronizer/obj/
-RemoteDesktopSynchronizer/obj/*
-RemoteDesktopSynchronizer\obj\
-RemoteDesktopSynchronizer\obj\*
-
 # User-specific files
 *.rsuser
 *.suo
@@ -38,7 +33,7 @@ bld/
 [Ll]ogs/
 
 # Visual Studio 2015/2017 cache/options directory
-.vs/
+
 # Uncomment if you have tasks that create the project's static files in wwwroot
 #wwwroot/
 
@@ -365,26 +360,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-RemoteDesktopSynchronizer/bin/
-RemoteDesktopSynchronizer/bin/*
-RemoteDesktopSynchronizer/obj/
-RemoteDesktopSynchronizer/obj/*
+
 .vs/
-/.vs
-.vs
-/RemoteDesktopSynchronizer/obj
-/RemoteDesktopSynchronizer/bin
-/RemoteDesktopSynchronizer/bin/
-/RemoteDesktopSynchronizer/bin/*
 /RemoteDesktopSynchronizer/obj/
-/RemoteDesktopSynchronizer/obj/*
-.vs/
-/.vs
-/.vs
-\RemoteDesktopSynchronizer\bin\
-\RemoteDesktopSynchronizer\bin\*
-\RemoteDesktopSynchronizer\obj\
-\RemoteDesktopSynchronizer\obj\*
-\.vs\
-\.vs
-\.vs
+/RemoteDesktopSynchronizer/bin/
