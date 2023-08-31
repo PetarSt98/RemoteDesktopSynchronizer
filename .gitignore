@@ -3,6 +3,11 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+RemoteDesktopSynchronizer/obj/
+RemoteDesktopSynchronizer/obj/*
+RemoteDesktopSynchronizer\obj\
+RemoteDesktopSynchronizer\obj\*
+
 # User-specific files
 *.rsuser
 *.suo
