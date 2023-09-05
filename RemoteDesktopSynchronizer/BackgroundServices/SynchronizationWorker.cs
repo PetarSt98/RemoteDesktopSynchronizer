@@ -33,7 +33,6 @@ namespace RemoteDesktopCleaner.BackgroundServices
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-
             LoggerSingleton.General.Info("Cleaner Worker is starting.");
             var gateways = AppConfig.GetGatewaysInUse();
             stoppingToken.Register(() => LoggerSingleton.General.Info("CleanerWorker background task is stopping."));

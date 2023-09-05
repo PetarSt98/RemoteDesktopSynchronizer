@@ -1,6 +1,7 @@
 ﻿using SynchronizerLibrary.Data;
 using SynchronizerLibrary.Loggers;
 using SynchronizerLibrary.CommonServices;
+using SynchronizerLibrary.DataBuffer;
 
 
 namespace RemoteDesktopCleaner.BackgroundServices
@@ -74,10 +75,32 @@ namespace RemoteDesktopCleaner.BackgroundServices
             var groupsToAdd = allGroups.Where(lg => lg.Flag == LocalGroupFlag.Add).ToList();
             var changedContent = allGroups.Where(lg => lg.Flag == LocalGroupFlag.CheckForUpdate && lg.MembersObj.Flags.Any(content => content != LocalGroupFlag.None)).ToList();
             var groupsToSync = new LocalGroupsChanges();
+
+            checkForSpam(groupsToDelete);
+            checkForSpam(groupsToAdd);
+            checkForSpam(changedContent);
+
             groupsToSync.LocalGroupsToDelete = groupsToDelete;
             groupsToSync.LocalGroupsToAdd = groupsToAdd;
             groupsToSync.LocalGroupsToUpdate = changedContent;
             return groupsToSync;
+        }
+
+        private void checkForSpam(List<LocalGroup> localGroups)
+        {
+            foreach (var lg in localGroups)
+            {
+                for (int i = 0; i < lg.ComputersObj.Flags.Count; i++)
+                {
+                    if (lg.ComputersObj.Flags[i] != LocalGroupFlag.None)
+                    {
+                        if(!SpamFailureHandler.CheckStatus(lg.ComputersObj.Names[i].Replace("$", ""), lg.Name.Replace("LG-", "")))
+                        {
+                            lg.ComputersObj.Flags[i] = LocalGroupFlag.None;
+                        }
+                    }
+                }
+            }
         }
 
         private LocalGroupContent GetListDiscrepancyTest(ICollection<string> modelList, bool addOrDeleteFlag)
