@@ -51,16 +51,16 @@ namespace RemoteDesktopCleaner.BackgroundServices
             foreach (var modelLocalGroup in modelCfgUnsychronizedAdd.LocalGroups)
             {
                 var lg = new LocalGroup(modelLocalGroup.Name, LocalGroupFlag.Add);
-                lg.ComputersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Computers, true));
-                lg.MembersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Members, true));
+                lg.ComputersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Computers, "Add"));
+                lg.MembersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Members, "Add"));
                 result.Add(lg);
             }
             GatewayConfig modelCfgUnsychronizedDelete = ReadUnsychronizedConfigDbModelDelete();
             foreach (var modelLocalGroup in modelCfgUnsychronizedDelete.LocalGroups)
             {
                 var lg = new LocalGroup(modelLocalGroup.Name, LocalGroupFlag.CheckForUpdate);
-                lg.ComputersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Computers, false));
-                lg.MembersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Members, true));
+                lg.ComputersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Computers, "Delete"));
+                lg.MembersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Members, "None"));
                 result.Add(lg);
             }
 
@@ -79,7 +79,6 @@ namespace RemoteDesktopCleaner.BackgroundServices
             checkForSpam(groupsToDelete);
             checkForSpam(groupsToAdd);
             checkForSpam(changedContent);
-
             groupsToSync.LocalGroupsToDelete = groupsToDelete;
             groupsToSync.LocalGroupsToAdd = groupsToAdd;
             groupsToSync.LocalGroupsToUpdate = changedContent;
@@ -88,30 +87,54 @@ namespace RemoteDesktopCleaner.BackgroundServices
 
         private void checkForSpam(List<LocalGroup> localGroups)
         {
+            bool stopSync = true;
             foreach (var lg in localGroups)
             {
                 for (int i = 0; i < lg.ComputersObj.Flags.Count; i++)
                 {
                     if (lg.ComputersObj.Flags[i] != LocalGroupFlag.None)
                     {
-                        if(!SpamFailureHandler.CheckStatus(lg.ComputersObj.Names[i].Replace("$", ""), lg.Name.Replace("LG-", "")))
+                        if(SpamFailureHandler.CheckStatus(lg.ComputersObj.Names[i].Replace("$", ""), lg.Name.Replace("LG-", "")))
                         {
                             lg.ComputersObj.Flags[i] = LocalGroupFlag.None;
+
                         }
                     }
+
+                    if (lg.ComputersObj.Flags[i] != LocalGroupFlag.None)
+                    {
+                        stopSync = false;
+                    }
+                }
+                if (stopSync)
+                {
+                    for (int i = 0; i < lg.ComputersObj.Flags.Count; i++)
+                    {
+                        lg.MembersObj.Flags[i] = LocalGroupFlag.None;
+                    }
+                    lg.Flag = LocalGroupFlag.None;
                 }
             }
+            localGroups.RemoveAll(lg => lg.Flag == LocalGroupFlag.None);
         }
 
-        private LocalGroupContent GetListDiscrepancyTest(ICollection<string> modelList, bool addOrDeleteFlag)
+        private LocalGroupContent GetListDiscrepancyTest(ICollection<string> modelList, string addOrDeleteFlag)
         {
 
             var flags = new List<LocalGroupFlag>();
             var names = new List<string>();
-            if (addOrDeleteFlag)
+            if (addOrDeleteFlag == "None")
+            {
+                flags.AddRange(from el in modelList select LocalGroupFlag.None);
+            }
+            else if (addOrDeleteFlag == "Add")
                 flags.AddRange(from el in modelList select LocalGroupFlag.Add);
-            else
+            else if (addOrDeleteFlag == "Delete")
                 flags.AddRange(from el in modelList select LocalGroupFlag.Delete);
+            else
+            {
+                throw new Exception("Unknown operator!");
+            }
             names.AddRange(from el in modelList select el.ToLower());
 
             return new LocalGroupContent(names, flags);
