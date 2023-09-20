@@ -363,4 +363,4 @@ FodyWeavers.xsd
 
 .vs/
 /RemoteDesktopSynchronizer/obj/
-/RemoteDesktopSynchronizer/bin/
+RemoteDesktopSynchronizer/bin

@@ -73,16 +73,40 @@ namespace RemoteDesktopCleaner.BackgroundServices
         {
             var groupsToDelete = allGroups.Where(lg => lg.Flag == LocalGroupFlag.Delete).ToList();
             var groupsToAdd = allGroups.Where(lg => lg.Flag == LocalGroupFlag.Add).ToList();
-            var changedContent = allGroups.Where(lg => lg.Flag == LocalGroupFlag.CheckForUpdate && lg.MembersObj.Flags.Any(content => content != LocalGroupFlag.None)).ToList();
+            var changedContent = allGroups.Where(lg => lg.Flag == LocalGroupFlag.CheckForUpdate && (lg.MembersObj.Flags.Any(content => content != LocalGroupFlag.None) || lg.ComputersObj.Flags.Any(content => content != LocalGroupFlag.None))).ToList();
             var groupsToSync = new LocalGroupsChanges();
 
             checkForSpam(groupsToDelete);
             checkForSpam(groupsToAdd);
             checkForSpam(changedContent);
+
+            //markGroupsToDelete(changedContent, groupsToDelete);
+
             groupsToSync.LocalGroupsToDelete = groupsToDelete;
             groupsToSync.LocalGroupsToAdd = groupsToAdd;
             groupsToSync.LocalGroupsToUpdate = changedContent;
             return groupsToSync;
+        }
+
+        private void markGroupsToDelete(List<LocalGroup> changedContent, List<LocalGroup> groupsToDelete)
+        {
+            foreach (var lg in changedContent)
+            {
+                bool deleteGroup = true;
+                foreach (var computerFlag in lg.ComputersObj.Flags)
+                {
+                    if (computerFlag != LocalGroupFlag.Delete)
+                    {
+                        deleteGroup = false;
+                    }
+                }
+                if (deleteGroup)
+                {
+                    lg.Flag = LocalGroupFlag.Delete;
+                    groupsToDelete.Add(lg);
+                }
+            }
+            changedContent.RemoveAll(lg => lg.Flag == LocalGroupFlag.Delete);
         }
 
         private void checkForSpam(List<LocalGroup> localGroups)
