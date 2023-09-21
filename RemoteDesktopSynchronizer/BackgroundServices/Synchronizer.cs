@@ -80,7 +80,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
             checkForSpam(groupsToAdd);
             checkForSpam(changedContent);
 
-            //markGroupsToDelete(changedContent, groupsToDelete);
+            markGroupsToDelete(changedContent, groupsToDelete);
 
             groupsToSync.LocalGroupsToDelete = groupsToDelete;
             groupsToSync.LocalGroupsToAdd = groupsToAdd;
@@ -92,7 +92,19 @@ namespace RemoteDesktopCleaner.BackgroundServices
         {
             foreach (var lg in changedContent)
             {
+                var validLgs = GetValidLocalGroups(lg.Name);
+
+
                 bool deleteGroup = true;
+
+                foreach (var computerFlag in validLgs.ComputersObj.Flags)
+                {
+                    if (computerFlag != LocalGroupFlag.Delete)
+                    {
+                        deleteGroup = false;
+                    }
+                }
+
                 foreach (var computerFlag in lg.ComputersObj.Flags)
                 {
                     if (computerFlag != LocalGroupFlag.Delete)
@@ -100,6 +112,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
                         deleteGroup = false;
                     }
                 }
+
                 if (deleteGroup)
                 {
                     lg.Flag = LocalGroupFlag.Delete;
@@ -185,6 +198,27 @@ namespace RemoteDesktopCleaner.BackgroundServices
             }
             var gatewayModel = new GatewayConfig("MODEL", localGroups);
             return gatewayModel;
+        }
+
+        public LocalGroup GetValidLocalGroups(string lgName)
+        {
+            var raps = GetRaps();
+            var unsynchronizedRaps = raps
+                        .Where(r => r.resourceGroupName == lgName)
+                        .ToList();
+
+            var localGroup = new LocalGroup();
+            var validRaps = unsynchronizedRaps.Where(IsRapValid);
+            foreach (var rap in validRaps)
+            {
+                var owner = rap.login;
+                var resources = rap.rap_resource.Where(IsResourceValid).Where(r => !r.toDelete)
+                    .Select(resource => $"{resource.resourceName}$").ToList();
+                resources.Add(owner);
+                var lg = new LocalGroup(rap.resourceGroupName, resources);
+                localGroup= lg;
+            }
+            return localGroup;
         }
 
         public GatewayConfig ReadUnsychronizedConfigDbModelDelete()
