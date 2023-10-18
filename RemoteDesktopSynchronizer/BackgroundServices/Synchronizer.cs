@@ -2,6 +2,7 @@
 using SynchronizerLibrary.Loggers;
 using SynchronizerLibrary.CommonServices;
 using SynchronizerLibrary.DataBuffer;
+using SynchronizerLibrary.CommonServices.LocalGroups;
 
 
 namespace RemoteDesktopCleaner.BackgroundServices
@@ -55,6 +56,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
                 lg.MembersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Members, "Add"));
                 result.Add(lg);
             }
+
             GatewayConfig modelCfgUnsychronizedDelete = ReadUnsychronizedConfigDbModelDelete();
             foreach (var modelLocalGroup in modelCfgUnsychronizedDelete.LocalGroups)
             {
