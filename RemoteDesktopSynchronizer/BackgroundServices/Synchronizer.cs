@@ -56,7 +56,15 @@ namespace RemoteDesktopCleaner.BackgroundServices
                 lg.MembersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Members, "Add"));
                 result.Add(lg);
             }
-
+            GatewayConfig modelCfgUnsychronizedUpdate = ReadUnsychronizedConfigDbModelUpdate();
+            foreach (var modelLocalGroup in modelCfgUnsychronizedUpdate.LocalGroups)
+            {
+                var lg = new LocalGroup(modelLocalGroup.Name, LocalGroupFlag.Add); // It should be CheckUpdates
+                lg.ComputersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Computers, "Add"));
+                lg.MembersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Members, "Add"));
+                result.Add(lg);
+            }
+            
             GatewayConfig modelCfgUnsychronizedDelete = ReadUnsychronizedConfigDbModelDelete();
             foreach (var modelLocalGroup in modelCfgUnsychronizedDelete.LocalGroups)
             {
@@ -184,7 +192,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
             LoggerSingleton.General.Info("Getting valid config model.");
             var raps = GetRaps();
             var unsynchronizedRaps = raps
-                        .Where(r => !r.toDelete && (r.synchronized == false || r.rap_resource.Any(rr => (rr.synchronized == false && !rr.toDelete))))
+                        .Where(r => !r.toDelete && (r.synchronized == false ))
                         .ToList();
 
             var localGroups = new List<LocalGroup>();
@@ -195,6 +203,31 @@ namespace RemoteDesktopCleaner.BackgroundServices
                 var resources = rap.rap_resource.Where(IsResourceValid).Where(r => !r.synchronized)
                     .Select(resource => $"{resource.resourceName}$").ToList();
                 resources.Add(owner);
+                var lg = new LocalGroup(rap.resourceGroupName, resources);
+                localGroups.Add(lg);
+            }
+            var gatewayModel = new GatewayConfig("MODEL", localGroups);
+            return gatewayModel;
+        }
+
+        public GatewayConfig ReadUnsychronizedConfigDbModelUpdate()
+        {
+            LoggerSingleton.General.Info("Getting valid config model.");
+            var raps = GetRaps();
+            var unsynchronizedRaps = raps
+                        .Where(r => !r.toDelete && (r.synchronized == true && r.rap_resource.Any(rr => (rr.synchronized == false && !rr.toDelete))))
+                        .ToList();
+
+            var localGroups = new List<LocalGroup>();
+            var validRaps = unsynchronizedRaps.Where(IsRapValid);
+            foreach (var rap in validRaps)
+            {
+                var owner = rap.login;
+                var resources = rap.rap_resource.Where(IsResourceValid).Where(r => !r.synchronized)
+                    .Select(resource => $"{resource.resourceName}$").ToList();
+                if (resources.Count == 0) continue;
+                resources.Add(owner);
+
                 var lg = new LocalGroup(rap.resourceGroupName, resources);
                 localGroups.Add(lg);
             }
@@ -271,7 +304,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
 
         private bool IsResourceValid(rap_resource resource)
         {
-            return !resource.toDelete && resource.invalid.HasValue && !resource.invalid.Value;
+            return !resource.toDelete && resource.access && resource.invalid.HasValue && !resource.invalid.Value;
         }
 
         private bool IsResourceRemovable(rap_resource resource)
