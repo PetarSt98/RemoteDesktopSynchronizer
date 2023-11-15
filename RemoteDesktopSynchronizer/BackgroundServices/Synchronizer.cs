@@ -24,7 +24,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
             {
                 LoggerSingleton.General.Info($"Starting the synchronization of '{serverName}' gateway.");
 
-                var cfgDiscrepancy = GetConfigDiscrepancy();
+                var cfgDiscrepancy = GetConfigDiscrepancy(serverName);
                 var changedLocalGroups = FilterChangedLocalGroups(cfgDiscrepancy.LocalGroups);
 
                 var addedGroups = _gatewayLocalGroupSynchronizer.SyncLocalGroups(changedLocalGroups, serverName);
@@ -43,7 +43,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
             LoggerSingleton.General.Info($"Finished synchronization for gateway '{serverName}'.");
         }
 
-        private GatewayConfig GetConfigDiscrepancy()
+        private GatewayConfig GetConfigDiscrepancy(string serverName)
         {
             LoggerSingleton.General.Info("Started comparing Local Groups and members from database and server");
             var result = new List<LocalGroup>();
@@ -64,7 +64,16 @@ namespace RemoteDesktopCleaner.BackgroundServices
                 lg.MembersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Members, "Add"));
                 result.Add(lg);
             }
-            
+
+            GatewayConfig modelCfgFailedSychronizedServers = ReadFailedSychronizedServersConfigDbModel(serverName);
+            foreach (var modelLocalGroup in modelCfgFailedSychronizedServers.LocalGroups)
+            {
+                var lg = new LocalGroup(modelLocalGroup.Name, LocalGroupFlag.Add); // It should be CheckUpdates
+                lg.ComputersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Computers, "Add"));
+                lg.MembersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Members, "Add"));
+                result.Add(lg);
+            }
+
             GatewayConfig modelCfgUnsychronizedDelete = ReadUnsychronizedConfigDbModelDelete();
             foreach (var modelLocalGroup in modelCfgUnsychronizedDelete.LocalGroups)
             {
@@ -90,7 +99,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
             checkForSpam(groupsToAdd);
             checkForSpam(changedContent);
 
-            markGroupsToDelete(changedContent, groupsToDelete);
+            //markGroupsToDelete(changedContent, groupsToDelete);
 
             groupsToSync.LocalGroupsToDelete = groupsToDelete;
             groupsToSync.LocalGroupsToAdd = groupsToAdd;
@@ -254,6 +263,31 @@ namespace RemoteDesktopCleaner.BackgroundServices
                 localGroup= lg;
             }
             return localGroup;
+        }
+
+        public GatewayConfig ReadFailedSychronizedServersConfigDbModel(string serverName)
+        {
+            LoggerSingleton.General.Info("Getting failed sync server config model.");
+            var raps = GetRaps();
+            var unsynchronizedRaps = raps
+                        .Where(r => !r.toDelete && (r.synchronized == true && r.rap_resource.Any(rr => (rr.synchronized == true && !rr.toDelete && rr.unsynchronizedGateways.Contains(serverName))))) 
+                        .ToList();
+
+            var localGroups = new List<LocalGroup>();
+            var validRaps = unsynchronizedRaps.Where(IsRapValid);
+            foreach (var rap in validRaps)
+            {
+                var owner = rap.login;
+                var resources = rap.rap_resource.Where(IsResourceValid).Where(r => r.synchronized && !r.toDelete && r.unsynchronizedGateways.Contains(serverName))
+                    .Select(resource => $"{resource.resourceName}$").ToList();
+                if (resources.Count == 0) continue;
+                resources.Add(owner);
+
+                var lg = new LocalGroup(rap.resourceGroupName, resources);
+                localGroups.Add(lg);
+            }
+            var gatewayModel = new GatewayConfig("MODEL", localGroups);
+            return gatewayModel;
         }
 
         public GatewayConfig ReadUnsychronizedConfigDbModelDelete()

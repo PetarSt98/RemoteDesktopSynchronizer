@@ -43,7 +43,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
                 var raps = new List<rap>();
 
 
-                    var gatewaysToSynchronize = new List<string> { "cerngt01" };
+                    var gatewaysToSynchronize = new List<string> { "cerngt01"};
 
                     foreach (var gatewayName in gatewaysToSynchronize)
                     {

@@ -12,6 +12,8 @@ namespace RemoteDesktopCleaner
         {
             try
             {
+                EnsureDirectoriesExist();
+
                 LoggerSingleton.General.Info($"Starting RemoteDesktopClearner console app");
                 Console.WriteLine("Starting sychronizer");
                 LoggerSingleton.General.Info("Starting sychronizer");
@@ -45,6 +47,20 @@ namespace RemoteDesktopCleaner
             }
         }
 
+        private static void EnsureDirectoriesExist()
+        {
+            string[] directories = { "Logs", "Info", "Cache" };
+
+            foreach (var directory in directories)
+            {
+                string directoryPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, directory);
+
+                if (!Directory.Exists(directoryPath))
+                {
+                    Directory.CreateDirectory(directoryPath);
+                }
+            }
+        }
         private static IServiceProvider ConfigureServices()
         {
             var services = new ServiceCollection();
