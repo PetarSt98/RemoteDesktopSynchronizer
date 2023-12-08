@@ -3,7 +3,7 @@ using SynchronizerLibrary.Loggers;
 using SynchronizerLibrary.CommonServices;
 using SynchronizerLibrary.DataBuffer;
 using SynchronizerLibrary.CommonServices.LocalGroups;
-
+using System.Data.Entity;
 
 namespace RemoteDesktopCleaner.BackgroundServices
 {
@@ -18,20 +18,20 @@ namespace RemoteDesktopCleaner.BackgroundServices
             _gatewayRapSynchronizer = gatewayRapSynchronizer;
         }
 
-        public async void SynchronizeAsync(string serverName)
+        public async Task SynchronizeAsync(string serverName)
         {
             try
             {
                 LoggerSingleton.General.Info($"Starting the synchronization of '{serverName}' gateway.");
-
-                var cfgDiscrepancy = GetConfigDiscrepancy(serverName);
+                Console.WriteLine($"Starting the synchronization of '{serverName}' gateway.\n");
+                var cfgDiscrepancy = await GetConfigDiscrepancy(serverName);
                 var changedLocalGroups = FilterChangedLocalGroups(cfgDiscrepancy.LocalGroups);
-
-                var addedGroups = _gatewayLocalGroupSynchronizer.SyncLocalGroups(changedLocalGroups, serverName);
+                Console.WriteLine("lala");
+                var addedGroups = await _gatewayLocalGroupSynchronizer.SyncLocalGroups(changedLocalGroups, serverName);
 
                 LoggerSingleton.General.Info($"Finished getting gateway RAP names for '{serverName}'.");
 
-                _gatewayRapSynchronizer.SynchronizeRaps(serverName, changedLocalGroups.LocalGroupsToAdd.Where(lg => lg.Name.StartsWith("LG-")).Select(lg => lg.Name).ToList(), new List<string>(), new List<string>());
+                await _gatewayRapSynchronizer.SynchronizeRaps(serverName, changedLocalGroups.LocalGroupsToAdd.Where(lg => lg.Name.StartsWith("LG-")).Select(lg => lg.Name).ToList(), new List<string>(), new List<string>());
 
                 LoggerSingleton.General.Info("Finished synchronization");
             }
@@ -43,12 +43,12 @@ namespace RemoteDesktopCleaner.BackgroundServices
             LoggerSingleton.General.Info($"Finished synchronization for gateway '{serverName}'.");
         }
 
-        private GatewayConfig GetConfigDiscrepancy(string serverName)
+        private async Task<GatewayConfig> GetConfigDiscrepancy(string serverName)
         {
             LoggerSingleton.General.Info("Started comparing Local Groups and members from database and server");
             var result = new List<LocalGroup>();
 
-            GatewayConfig modelCfgUnsychronizedAdd = ReadUnsychronizedConfigDbModelAdd();
+            GatewayConfig modelCfgUnsychronizedAdd = await ReadUnsychronizedConfigDbModelAdd();
             foreach (var modelLocalGroup in modelCfgUnsychronizedAdd.LocalGroups)
             {
                 var lg = new LocalGroup(modelLocalGroup.Name, LocalGroupFlag.Add);
@@ -56,7 +56,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
                 lg.MembersObj.AddRange(GetListDiscrepancyTest(modelLocalGroup.Members, "Add"));
                 result.Add(lg);
             }
-            GatewayConfig modelCfgUnsychronizedUpdate = ReadUnsychronizedConfigDbModelUpdate();
+            GatewayConfig modelCfgUnsychronizedUpdate = await ReadUnsychronizedConfigDbModelUpdate();
             foreach (var modelLocalGroup in modelCfgUnsychronizedUpdate.LocalGroups)
             {
                 var lg = new LocalGroup(modelLocalGroup.Name, LocalGroupFlag.Add); // It should be CheckUpdates
@@ -65,7 +65,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
                 result.Add(lg);
             }
 
-            GatewayConfig modelCfgFailedSychronizedServers = ReadFailedSychronizedServersConfigDbModel(serverName);
+            GatewayConfig modelCfgFailedSychronizedServers = await ReadFailedSychronizedServersConfigDbModel(serverName);
             foreach (var modelLocalGroup in modelCfgFailedSychronizedServers.LocalGroups)
             {
                 var lg = new LocalGroup(modelLocalGroup.Name, LocalGroupFlag.Add); // It should be CheckUpdates
@@ -74,7 +74,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
                 result.Add(lg);
             }
 
-            GatewayConfig modelCfgUnsychronizedDelete = ReadUnsychronizedConfigDbModelDelete();
+            GatewayConfig modelCfgUnsychronizedDelete = await ReadUnsychronizedConfigDbModelDelete();
             foreach (var modelLocalGroup in modelCfgUnsychronizedDelete.LocalGroups)
             {
                 var lg = new LocalGroup(modelLocalGroup.Name, LocalGroupFlag.CheckForUpdate);
@@ -107,11 +107,11 @@ namespace RemoteDesktopCleaner.BackgroundServices
             return groupsToSync;
         }
 
-        private void markGroupsToDelete(List<LocalGroup> changedContent, List<LocalGroup> groupsToDelete)
+        private async Task markGroupsToDelete(List<LocalGroup> changedContent, List<LocalGroup> groupsToDelete)
         {
             foreach (var lg in changedContent)
             {
-                var validLgs = GetValidLocalGroups(lg.Name);
+                var validLgs = await GetValidLocalGroups(lg.Name);
 
 
                 bool deleteGroup = true;
@@ -196,10 +196,10 @@ namespace RemoteDesktopCleaner.BackgroundServices
             return new LocalGroupContent(names, flags);
         }
 
-        public GatewayConfig ReadUnsychronizedConfigDbModelAdd()
+        public async Task<GatewayConfig> ReadUnsychronizedConfigDbModelAdd()
         {
             LoggerSingleton.General.Info("Getting valid config model.");
-            var raps = GetRaps();
+            var raps = await GetRapsAsync();
             var unsynchronizedRaps = raps
                         .Where(r => !r.toDelete && (r.synchronized == false ))
                         .ToList();
@@ -219,10 +219,10 @@ namespace RemoteDesktopCleaner.BackgroundServices
             return gatewayModel;
         }
 
-        public GatewayConfig ReadUnsychronizedConfigDbModelUpdate()
+        public async Task<GatewayConfig> ReadUnsychronizedConfigDbModelUpdate()
         {
             LoggerSingleton.General.Info("Getting valid config model.");
-            var raps = GetRaps();
+            var raps = await GetRapsAsync();
             var unsynchronizedRaps = raps
                         .Where(r => !r.toDelete && (r.synchronized == true && r.rap_resource.Any(rr => (rr.synchronized == false && !rr.toDelete))))
                         .ToList();
@@ -244,9 +244,9 @@ namespace RemoteDesktopCleaner.BackgroundServices
             return gatewayModel;
         }
 
-        public LocalGroup GetValidLocalGroups(string lgName)
+        public async Task<LocalGroup> GetValidLocalGroups(string lgName)
         {
-            var raps = GetRaps();
+            var raps = await GetRapsAsync();
             var unsynchronizedRaps = raps
                         .Where(r => r.resourceGroupName == lgName)
                         .ToList();
@@ -265,10 +265,10 @@ namespace RemoteDesktopCleaner.BackgroundServices
             return localGroup;
         }
 
-        public GatewayConfig ReadFailedSychronizedServersConfigDbModel(string serverName)
+        public async Task<GatewayConfig> ReadFailedSychronizedServersConfigDbModel(string serverName)
         {
             LoggerSingleton.General.Info("Getting failed sync server config model.");
-            var raps = GetRaps();
+            var raps = await GetRapsAsync();
             var unsynchronizedRaps = raps
                         .Where(r => !r.toDelete && (r.synchronized == true && r.rap_resource.Any(rr => (rr.synchronized == true && !rr.toDelete && rr.unsynchronizedGateways.Contains(serverName))))) 
                         .ToList();
@@ -290,10 +290,10 @@ namespace RemoteDesktopCleaner.BackgroundServices
             return gatewayModel;
         }
 
-        public GatewayConfig ReadUnsychronizedConfigDbModelDelete()
+        public async Task<GatewayConfig> ReadUnsychronizedConfigDbModelDelete()
         {
             LoggerSingleton.General.Info("Getting valid config model.");
-            var raps = GetRaps();
+            var raps = await GetRapsAsync();
             var unsynchronizedRaps = raps
                                     .Where(r => !r.toDelete && r.rap_resource.Any(rr => rr.toDelete))
                                     .ToList();
@@ -312,14 +312,14 @@ namespace RemoteDesktopCleaner.BackgroundServices
             return gatewayModel;
         }
 
-        public IEnumerable<rap> GetRaps()
+        public async Task<IEnumerable<rap>> GetRapsAsync()
         {
             var results = new List<rap>();
             try
             {
                 using (var db = new RapContext())
                 {
-                    results.AddRange(db.raps.Include("rap_resource").ToList());
+                    results.AddRange(await db.raps.Include("rap_resource").ToListAsync());
                 }
             }
             catch (Exception ex)

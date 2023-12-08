@@ -6,6 +6,7 @@ using SynchronizerLibrary.Data;
 using SynchronizerLibrary.CommonServices;
 using SynchronizerLibrary.DataBuffer;
 using System.DirectoryServices;
+using System.Collections.Concurrent;
 
 
 namespace RemoteDesktopCleaner.BackgroundServices
@@ -24,10 +25,12 @@ namespace RemoteDesktopCleaner.BackgroundServices
     {
         //private readonly IConfigValidator _configValidator;
         private readonly ISynchronizer _synchronizer;
+        private readonly IHostApplicationLifetime _appLifetime;
 
-        public SynchronizationWorker(ISynchronizer synchronizer)
+        public SynchronizationWorker(ISynchronizer synchronizer, IHostApplicationLifetime appLifetime)
         {
             _synchronizer = synchronizer;
+            _appLifetime = appLifetime;
             //_configValidator = configValidator;
         }
 
@@ -38,48 +41,60 @@ namespace RemoteDesktopCleaner.BackgroundServices
             stoppingToken.Register(() => LoggerSingleton.General.Info("CleanerWorker background task is stopping."));
             //while (!stoppingToken.IsCancellationRequested) 
             //{
-                try
-                {
+            try
+            {
                 var raps = new List<rap>();
 
 
-                    var gatewaysToSynchronize = new List<string> { "cerngt01", "cerngt05"};
+                var gatewaysToSynchronize = new List<string> { "cerngt01", "cerngt05", "cerngt06", "cerngt07" };
 
-                    foreach (var gatewayName in gatewaysToSynchronize)
-                    {
+                var tasks = new List<Task>();
 
-                        GlobalInstance.Instance.Names.Add(gatewayName);
-                        GlobalInstance.Instance.ObjectLists[gatewayName] = new Dictionary<string, RAP_ResourceStatus>();
-                        _synchronizer.SynchronizeAsync(gatewayName);
-                    }
+                foreach (var gatewayName in gatewaysToSynchronize)
+                {
+                    GlobalInstance.Instance.Names.Add(gatewayName);
+                    GlobalInstance.Instance.ObjectLists[gatewayName] = new ConcurrentDictionary<string, RAP_ResourceStatus>();
+                    tasks.Add(Task.Run(() => _synchronizer.SynchronizeAsync(gatewayName)));
+                }
 
-                    DatabaseSynchronizator databaseSynchronizator = new DatabaseSynchronizator();
-                    databaseSynchronizator.AverageGatewayReults();
-                    databaseSynchronizator.UpdateDatabase();
+                // Asynchronously wait for all tasks to complete
+                await Task.WhenAll(tasks);
+                Console.WriteLine("TEST\n");
+                //foreach (var gatewayName in gatewaysToSynchronize)
+                //{
 
-                    using (var db = new RapContext())
-                    {
-                        UpdateDatabase(db);
-                    }
+                //    GlobalInstance.Instance.Names.Add(gatewayName);
+                //    GlobalInstance.Instance.ObjectLists[gatewayName] = new Dictionary<string, RAP_ResourceStatus>();
+                //    _synchronizer.SynchronizeAsync(gatewayName);
+                //}
 
+                DatabaseSynchronizator databaseSynchronizator = new DatabaseSynchronizator();
+                databaseSynchronizator.AverageGatewayReults();
+                databaseSynchronizator.UpdateDatabase();
 
+                using (var db = new RapContext())
+                {
+                    UpdateDatabase(db);
+                }
+
+                _appLifetime.StopApplication();
                 //break;
             }
-                catch (OperationCanceledException)
-                {
-                    LoggerSingleton.General.Info("Program canceled.");
-                    //break;
-                }
-                catch (CloningException)
-                {
-                    //break;
-                }
-                catch (Exception ex)
-                {
-                    LoggerSingleton.General.Fatal(ex.ToString());
-                    Console.WriteLine(ex.ToString());
-                    //break;
-                }
+            catch (OperationCanceledException)
+            {
+                LoggerSingleton.General.Info("Program canceled.");
+                //break;
+            }
+            catch (CloningException)
+            {
+                //break;
+            }
+            catch (Exception ex)
+            {
+                LoggerSingleton.General.Fatal(ex.ToString());
+                Console.WriteLine(ex.ToString());
+                //break;
+            }
             //}
         }
         static public void UpdateDatabase(RapContext db)

@@ -2,13 +2,13 @@
 using RemoteDesktopCleaner.BackgroundServices;
 using SynchronizerLibrary.Loggers;
 using SynchronizerLibrary.CommonServices;
-
+using Microsoft.Extensions.Hosting;
 
 namespace RemoteDesktopCleaner
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             try
             {
@@ -18,27 +18,14 @@ namespace RemoteDesktopCleaner
                 Console.WriteLine("Starting sychronizer");
                 LoggerSingleton.General.Info("Starting sychronizer");
 
-                // Configure services
-                var serviceProvider = ConfigureServices();
+                // Create and configure the host
+                var host = CreateHostBuilder(args).Build();
 
-                LoggerSingleton.General.Info("Setting up workers");
-                Console.WriteLine("Setting up workers");
-                var cw = serviceProvider.GetService<SynchronizationWorker>();
+                // Start the host
+                await host.RunAsync();
 
-                if (cw == null)
-                {
-                    LoggerSingleton.General.Error("Failed to resolve SynchronizationWorker from the DI container.");
-                    Console.WriteLine("Failed to resolve SynchronizationWorker from the DI container.");
-                    return;
-                }
-
-                LoggerSingleton.General.Info("Starting initial synchronization");
-                Console.WriteLine("Starting initial synchronization");
-                cw.StartAsync(CancellationToken.None).Wait();
-                Console.WriteLine("Finished synchronizing");
                 LoggerSingleton.General.Info("Finished synchronizing");
-
-
+                Console.WriteLine("Finished synchronizing");
             }
             catch (Exception ex)
             {
@@ -46,6 +33,14 @@ namespace RemoteDesktopCleaner
                 Console.Error.WriteLine(ex.Message);
             }
         }
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+    Host.CreateDefaultBuilder(args)
+        .ConfigureServices((hostContext, services) =>
+        {
+                    // Register your services and background tasks
+                    ConfigureServices(services);
+            services.AddHostedService<SynchronizationWorker>();
+        });
 
         private static void EnsureDirectoriesExist()
         {
@@ -61,10 +56,8 @@ namespace RemoteDesktopCleaner
                 }
             }
         }
-        private static IServiceProvider ConfigureServices()
+        private static void ConfigureServices(IServiceCollection services)
         {
-            var services = new ServiceCollection();
-
             LoggerSingleton.General.Info("Configuring services");
 
             // Register services and dependencies
@@ -73,10 +66,9 @@ namespace RemoteDesktopCleaner
             services.AddSingleton<IGatewayLocalGroupSynchronizer, GatewayLocalGroupSynchronizer>();
             services.AddSingleton<SynchronizationWorker>();
 
-            // Build the service provider
-            var serviceProvider = services.BuildServiceProvider();
-
-            return serviceProvider;
+            // No need to build and return the service provider here
+            // var serviceProvider = services.BuildServiceProvider();
+            // return serviceProvider;
         }
     }
 }
