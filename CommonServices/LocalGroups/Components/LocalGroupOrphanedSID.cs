@@ -26,7 +26,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Components
             }
         }
 
-        private bool RemoveOrphanedSids(DirectoryEntry groupPrincipal, LocalGroup lg)
+        public static bool RemoveOrphanedSids(DirectoryEntry groupPrincipal, LocalGroup lg)
         {
             var success = true;
             var globalSuccess = true;

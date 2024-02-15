@@ -46,8 +46,10 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Components
 
         public bool RemoveMemberFromLocalGroup(string memberName, string groupName, string serverName, DirectoryEntry groupEntry)
         {
+
             bool success;
             LoggerSingleton.SynchronizedLocalGroups.Info($"Removing member: '{memberName}' from group: '{groupName}' on gateway: '{serverName}'.");
+            Console.WriteLine($"Removing member: '{memberName}' from group: '{groupName}' on gateway: '{serverName}'.");
             try
             {
                 try
@@ -94,6 +96,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Components
             //string username = "";
             //string password = "";
             LoggerSingleton.SynchronizedLocalGroups.Info($"Adding new member '{memberName}' to the group '{groupName}' on gateway '{serverName}'.");
+            Console.WriteLine($"Adding new member '{memberName}' to the group '{groupName}' on gateway '{serverName}'.");
             try
             {
                 try

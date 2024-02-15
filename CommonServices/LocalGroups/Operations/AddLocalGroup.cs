@@ -23,6 +23,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Operations
             {
                 foreach (var lg in groupsToAdd)
                 {
+                    Console.WriteLine($"Adding group: {lg.Name} on server {serverName}");
                     LoggerSingleton.SynchronizedLocalGroups.Info(serverName, $"Adding group '{lg.Name}'.");
                     if (await AddNewGroupWithContent(serverName, lg))
                     {
@@ -58,7 +59,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Operations
             //string groupName = FormatModifiedValue(lg.Name);
             var success = true;
             LoggerSingleton.SynchronizedLocalGroups.Info($"Adding empty group {lg.Name}");
-            var newGroup = AddEmptyGroup(lg.Name, server);
+            var newGroup = AddEmptyGroup(lg.Name, server, lg);
             if (newGroup is not null)
             {
                 LocalGroupMembers localGroupMembers = new LocalGroupMembers();
@@ -71,17 +72,19 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Operations
                     success = false;
                 if (! await lapsService.SyncLAPS(server, lg))
                     success = false;
+
+                newGroup.CommitChanges();
             }
             else
             {
                 success = false;
+                Console.WriteLine($"Failed adding new group: '{lg.Name}' and its contents on {server}.");
                 LoggerSingleton.SynchronizedLocalGroups.Error(server, $"Failed adding new group: '{lg.Name}' and its contents.");
             }
-            newGroup.CommitChanges();
             return success;
         }
 
-        public DirectoryEntry AddEmptyGroup(string groupName, string server)
+        public DirectoryEntry AddEmptyGroup(string groupName, string server, LocalGroup lg)
         {
             var success = true;
             DirectoryEntry newGroup = null;
@@ -116,6 +119,10 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Operations
                 {
                     newGroup = ad.Children.Add(groupName, "group");
                     newGroup.CommitChanges();
+                }
+                else
+                {
+                    _ = LocalGroupOrphanedSID.RemoveOrphanedSids(newGroup, lg);
                 }
             }
             catch (Exception ex)

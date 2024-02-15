@@ -1,5 +1,8 @@
-﻿using System.DirectoryServices;
-using System.Management;
+﻿using System;
+using System.Management; // For ManagementBaseObject
+using System.Threading;
+using System.DirectoryServices;
+using System.Threading.Tasks;
 using Microsoft.Management.Infrastructure;
 using Microsoft.Management.Infrastructure.Options;
 using System.Security;
@@ -227,36 +230,81 @@ namespace SynchronizerLibrary.CommonServices
                 inParameters["ResourceGroupType"] = "CG";
                 inParameters["ProtocolNames"] = "RDP";
                 inParameters["PortNumbers"] = "3389";
+
+                int maxRetries = 5;
+                TimeSpan operationTimeout = TimeSpan.FromMinutes(4);
+                bool globalSuccess = true;
                 foreach (var rapName in missingRapNames)
                 {
-                    //_reporter.Info(serverName, $"Adding '{rapName}'.");
-                    LoggerSingleton.SynchronizedRaps.Info($"Adding new RAP '{rapName}' to the gateway '{serverName}'.");
-                    var groupName = ConvertToLgName(rapName);
-                    inParameters["Name"] = "" + rapName;
-                    inParameters["ResourceGroupName"] = groupName;
-                    inParameters["UserGroupNames"] = groupName;
-
-                    ManagementBaseObject outParameters = processClass.InvokeMethod("Create", inParameters, imo);
-
-                    if ((uint)outParameters["ReturnValue"] == 0)
+                    bool iterationSuccess = false;
+                    for (int attempt = 0; attempt < maxRetries; attempt++)
                     {
-                        Console.WriteLine($"{rapName} created. {++i}/{missingRapNames.Count}"); //TODO delete
-                        LoggerSingleton.SynchronizedRaps.Info($"RAP '{rapName}' added to the gateway '{serverName}'.");
-                        //GlobalInstance.Instance.AddToObjectsList(serverName, computer.Name.Replace("$", ""), "LG-" + rapName, true);
-                        //_reporter.IncrementAddedRaps(serverName);
-                    }
-                    else
-                    {
-                        if ((uint)outParameters["ReturnValue"] == 2147749913)
+                        bool success = false;
+                        var cts = new CancellationTokenSource(operationTimeout);
+                        try
                         {
-                            LoggerSingleton.SynchronizedRaps.Warn($"Error creating RAP: '{rapName}'. Reason: Already exists.");
-                            //GlobalInstance.Instance.AddToObjectsList(serverName, computer.Name.Replace("$", ""), "LG-" + rapName, true);
+                            var task = Task.Run(() =>
+                            {
+                                // Place the original operation here
+                                LoggerSingleton.SynchronizedRaps.Info($"Adding new RAP '{rapName}' to the gateway '{serverName}'.");
+                                var groupName = ConvertToLgName(rapName);
+                                inParameters["Name"] = "" + rapName;
+                                inParameters["ResourceGroupName"] = groupName;
+                                inParameters["UserGroupNames"] = groupName;
+
+                                ManagementBaseObject outParameters = processClass.InvokeMethod("Create", inParameters, imo);
+
+                                if ((uint)outParameters["ReturnValue"] == 0)
+                                {
+                                    Console.WriteLine($"{rapName} created.");
+                                    LoggerSingleton.SynchronizedRaps.Info($"RAP '{rapName}' added to the gateway '{serverName}'.");
+                                    return true; // Operation succeeded
+                                }
+                                else
+                                {
+                                    if ((uint)outParameters["ReturnValue"] == 2147749913)
+                                    {
+                                        LoggerSingleton.SynchronizedRaps.Warn($"RAP '{rapName}' already exists.");
+                                        return true;
+                                    }
+                                    else
+                                    {
+                                        LoggerSingleton.SynchronizedRaps.Error($"Error creating RAP: '{rapName}'. Reason: {(uint)outParameters["ReturnValue"]}.");
+                                        GlobalInstance.Instance.UpdateObjectsStatus(serverName, groupName, false, "False RAP addition");
+                                    }
+                                    return false; // Operation failed but was executed
+                                }
+                            }, cts.Token);
+
+                            success = await task;
+                            iterationSuccess |= success;
+                            if (success) break; // If operation succeeded, move to the next rapName
                         }
-                        else
-                            LoggerSingleton.SynchronizedRaps.Error($"Error creating RAP: '{rapName}'. Reason: {(uint)outParameters["ReturnValue"]}.");
+                        catch (OperationCanceledException)
+                        {
+                            Console.WriteLine($"Operation for '{rapName}' timed out.");
+                            LoggerSingleton.SynchronizedRaps.Error($"Error creating RAP: '{rapName}'. Reason: Timeout. Try {attempt} ");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"An error occurred for '{rapName}': {ex.Message}");
+                            LoggerSingleton.SynchronizedRaps.Error($"Error creating RAP: '{rapName}'. Reason: {ex.Message}. Try {attempt} ");
+                        }
+                        finally
+                        {
+                            cts.Dispose();
+                        }
+
+                        if (!success)
+                        {
+                            Console.WriteLine($"Retrying '{rapName}' (Attempt {attempt + 1}/{maxRetries})");
+                        }
                     }
+                    globalSuccess &= iterationSuccess;
+                     // If after max retries the operation didn't succeed, return false
                 }
-                return true;
+
+                return globalSuccess;
             }
             catch (System.Exception ex)
             {

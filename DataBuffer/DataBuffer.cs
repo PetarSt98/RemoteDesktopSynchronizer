@@ -46,6 +46,37 @@ namespace SynchronizerLibrary.DataBuffer
             resourceStatus.Status &= status;
         }
 
+        //public IEnumerable<RAP_ResourceStatus> GetValuesForUser(string serverName, string userPrefix)
+        //{
+        //    if (ObjectLists.TryGetValue(serverName, out var serverObjects))
+        //    {
+        //        var filteredValues = serverObjects.Where(kv => kv.Key.StartsWith(userPrefix)).Select(kv => kv.Value);
+
+        //        return filteredValues;
+        //    }
+
+        //    return Enumerable.Empty<RAP_ResourceStatus>();
+        //}
+
+        public void UpdateObjectsStatus(string serverName, string groupName, bool status, string statusMessage = null)
+        {
+            if (ObjectLists.TryGetValue(serverName, out var serverObjects))
+            {
+                foreach (var entry in serverObjects)
+                {
+                    if (entry.Key.Contains(groupName))
+                    {
+                        var resourceStatus = entry.Value;
+                        resourceStatus.Status = status;
+                        if (statusMessage != null)
+                        {
+                            resourceStatus.StatusMessage = statusMessage;
+                        }
+                    }
+                }
+            }
+        }
+
 
         //public void AddToObjectsList(string serverName, string computerName, string groupName, bool status, string statusMessage = null)
         //{

@@ -98,6 +98,8 @@ namespace SynchronizerLibrary.EmailService
     public class UnsuccessfulEmail : EmailBuilder
     {
         public override bool UncompletedSync { get; set; } = false;
+        public static string[] uncompletedMessages { get; } = { "Access is denied.", "There is no such object on the server.", "disabled", "Device is unreachable.", "The network path was not found.", "Unreachable password" };
+
         public UnsuccessfulEmail()
         {
         }
@@ -110,11 +112,11 @@ namespace SynchronizerLibrary.EmailService
                     ((r.RAPName == obj.GroupName.Replace("LG-", "RAP_")) && (r.resourceName == obj.ComputerName)))
                     .ToList()[0];
 
-            if (resource.unsynchronizedGateways.Length != 0)
+            if (resource.unsynchronizedGateways.Length != 0 && obj.UnsynchronizedServers.Length != 0)
             {
                 sendEmailFlag = false;
             }
-
+            resource.unsynchronizedGateways = obj.UnsynchronizedServers;
             if (!sendEmailFlag) return;
 
             Console.WriteLine("Sending email");
@@ -173,58 +175,66 @@ namespace SynchronizerLibrary.EmailService
                 Console.WriteLine("Status");
                 Console.WriteLine(obj.StatusMessage);
 
-                if (obj.StatusMessage == "Access is denied." || obj.FailedStatuses.Contains("Access is denied.;"))
+                if (obj.UnsynchronizedServers.Length > 0)
                 {
-                    subject = "Remote Desktop Service device synchronization Uncompleted";
-                    template = System.IO.File.ReadAllText(@".\DataBuffer\EmailTemplates\User_RequestUncompleted.htm");  // Replace with actual path
-                    template = template.Replace("$reason", "TS Gateway does not have access to your device.");
-                    template = template.Replace("$raison", "TS Gateway n'a pas accès à votre appareil.");
-                    UncompletedSync = true;
-                }
-                else if (obj.StatusMessage == "There is no such object on the server." || obj.FailedStatuses.Contains("There is no such object on the server.;"))
-                {
-                    subject = "Remote Desktop Service device synchronization Uncompleted";
-                    template = System.IO.File.ReadAllText(@".\DataBuffer\EmailTemplates\User_RequestUncompleted.htm");  // Replace with actual path
-                    template = template.Replace("$reason", $"The device {remoteMachine} cannot be found on the server.");
-                    template = template.Replace("$raison", "L'appareil n'est pas trouvé sur le serveur.");
-                    UncompletedSync = true;
-                }
-                else if (obj.StatusMessage.Contains("disabled") || obj.FailedStatuses.Contains("disabled"))
-                {
-                    subject = "Remote Desktop Service device synchronization Uncompleted";
-                    template = System.IO.File.ReadAllText(@".\DataBuffer\EmailTemplates\User_RequestUncompleted.htm");  // Replace with actual path
-                    template = template.Replace("$reason", "Administrator user in Local User and Groups on your machine is disabled.");
-                    template = template.Replace("$raison", "L'utilisateur administrateur est désactivé dans le groupe local d'utilisateurs et de groupes de votre machine.");
-                    UncompletedSync = true;
-                }
-                else if (obj.StatusMessage == "Device is unreachable." || obj.FailedStatuses.Contains("Device is unreachable.;"))
-                {
-                    subject = "Remote Desktop Service device synchronization Uncompleted";
-                    template = System.IO.File.ReadAllText(@".\DataBuffer\EmailTemplates\User_RequestUncompleted.htm");  // Replace with actual path
-                    template = template.Replace("$reason", "Your device is not reachable by TS Gateway.");
-                    template = template.Replace("$raison", "Votre appareil n'est pas accessible par TS Gateway.");
-                    UncompletedSync = true;
-                }
-                else if (obj.StatusMessage == "The network path was not found." || obj.FailedStatuses.Contains("The network path was not found.;"))
-                {
-                    subject = "Remote Desktop Service device synchronization Uncompleted";
-                    template = System.IO.File.ReadAllText(@".\DataBuffer\EmailTemplates\User_RequestUncompleted.htm");  // Replace with actual path
-                    template = template.Replace("$reason", "Your device was offline when TS Gateway tried to reach it.");
-                    template = template.Replace("$raison", "Votre appareil était hors ligne lorsque TS Gateway a essayé de le joindre.");
-                    UncompletedSync = true;
-                }
-                else if (obj.StatusMessage.Contains("Unreachable password") || obj.FailedStatuses.Contains("Unreachable password"))
-                {
-                    subject = "Remote Desktop Service device synchronization Uncompleted";
-                    template = System.IO.File.ReadAllText(@".\DataBuffer\EmailTemplates\User_RequestUncompleted.htm");  // Replace with actual path
-                    template = template.Replace("$reason", "Your device is not reachable by TS Gateway.");
-                    template = template.Replace("$raison", "Votre appareil n'est pas accessible par TS Gateway.");
-                    UncompletedSync = true;
+                    subject = "Remote Desktop Service device synchronization Failed";
+                    template = System.IO.File.ReadAllText(@".\DataBuffer\EmailTemplates\User_RequestFailed.htm");
                 }
                 else
                 {
-                    subject = "Remote Desktop Service device synchronization Failed";
-                    template = System.IO.File.ReadAllText(@".\DataBuffer\EmailTemplates\User_RequestFailed.htm");  // Replace with actual path
+                    if (obj.StatusMessage == uncompletedMessages[0] || obj.FailedStatuses.Contains(uncompletedMessages[0]))
+                    {
+                        subject = "Remote Desktop Service device synchronization Uncompleted";
+                        template = System.IO.File.ReadAllText(@".\DataBuffer\EmailTemplates\User_RequestUncompleted.htm");  // Replace with actual path
+                        template = template.Replace("$reason", "TS Gateway does not have access to your device.");
+                        template = template.Replace("$raison", "TS Gateway n'a pas accès à votre appareil.");
+                        UncompletedSync = true;
+                    }
+                    else if (obj.StatusMessage == uncompletedMessages[1] || obj.FailedStatuses.Contains(uncompletedMessages[1]))
+                    {
+                        subject = "Remote Desktop Service device synchronization Uncompleted";
+                        template = System.IO.File.ReadAllText(@".\DataBuffer\EmailTemplates\User_RequestUncompleted.htm");  // Replace with actual path
+                        template = template.Replace("$reason", $"The device {remoteMachine} cannot be found on the server.");
+                        template = template.Replace("$raison", "L'appareil n'est pas trouvé sur le serveur.");
+                        UncompletedSync = true;
+                    }
+                    else if (obj.StatusMessage.Contains(uncompletedMessages[2]) || obj.FailedStatuses.Contains(uncompletedMessages[2]))
+                    {
+                        subject = "Remote Desktop Service device synchronization Uncompleted";
+                        template = System.IO.File.ReadAllText(@".\DataBuffer\EmailTemplates\User_RequestUncompleted.htm");  // Replace with actual path
+                        template = template.Replace("$reason", "Administrator user in Local User and Groups on your machine is disabled.");
+                        template = template.Replace("$raison", "L'utilisateur administrateur est désactivé dans le groupe local d'utilisateurs et de groupes de votre machine.");
+                        UncompletedSync = true;
+                    }
+                    else if (obj.StatusMessage == uncompletedMessages[3] || obj.FailedStatuses.Contains(uncompletedMessages[3]))
+                    {
+                        subject = "Remote Desktop Service device synchronization Uncompleted";
+                        template = System.IO.File.ReadAllText(@".\DataBuffer\EmailTemplates\User_RequestUncompleted.htm");  // Replace with actual path
+                        template = template.Replace("$reason", "Your device is not reachable by TS Gateway.");
+                        template = template.Replace("$raison", "Votre appareil n'est pas accessible par TS Gateway.");
+                        UncompletedSync = true;
+                    }
+                    else if (obj.StatusMessage == uncompletedMessages[4] || obj.FailedStatuses.Contains(uncompletedMessages[4]))
+                    {
+                        subject = "Remote Desktop Service device synchronization Uncompleted";
+                        template = System.IO.File.ReadAllText(@".\DataBuffer\EmailTemplates\User_RequestUncompleted.htm");  // Replace with actual path
+                        template = template.Replace("$reason", "Your device was offline when TS Gateway tried to reach it.");
+                        template = template.Replace("$raison", "Votre appareil était hors ligne lorsque TS Gateway a essayé de le joindre.");
+                        UncompletedSync = true;
+                    }
+                    else if (obj.StatusMessage.Contains(uncompletedMessages[5]) || obj.FailedStatuses.Contains(uncompletedMessages[5]))
+                    {
+                        subject = "Remote Desktop Service device synchronization Uncompleted";
+                        template = System.IO.File.ReadAllText(@".\DataBuffer\EmailTemplates\User_RequestUncompleted.htm");  // Replace with actual path
+                        template = template.Replace("$reason", "Your device is not reachable by TS Gateway.");
+                        template = template.Replace("$raison", "Votre appareil n'est pas accessible par TS Gateway.");
+                        UncompletedSync = true;
+                    }
+                    else
+                    {
+                        subject = "Remote Desktop Service device synchronization Failed";
+                        template = System.IO.File.ReadAllText(@".\DataBuffer\EmailTemplates\User_RequestFailed.htm");  // Replace with actual path
+                    }
                 }
             }
             else
@@ -261,14 +271,14 @@ namespace SynchronizerLibrary.EmailService
                     resource.synchronized = true;
                     resource.updateDate = DateTime.Now;
 
-                    if(resource.unsynchronizedGateways.Length != 0)
+                    if(obj.UnsynchronizedServers.Length != 0)
                     {
                         sendEmailFlag = false;
                     }
 
-
                     resource.unsynchronizedGateways = obj.UnsynchronizedServers;
                     
+                    db.SaveChanges();
 
                     if (!sendEmailFlag) return;
 

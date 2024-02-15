@@ -184,12 +184,15 @@ namespace SynchronizerLibrary.CommonServices
 
             LocalGroupOperations localGroupOperator = new LocalGroupOperations();
 
+            Console.WriteLine($"Deleting LGs on {serverName}");
             await localGroupOperator.deleteLocalGroup.DeleteGroups(serverName, changedLocalGroups.LocalGroupsToDelete);
+            Console.WriteLine($"Adding LGs on {serverName}");
             var addedGroups = await localGroupOperator.addLocalGroup.AddNewGroups(serverName, changedLocalGroups.LocalGroupsToAdd);
+            Console.WriteLine($"Updating LGs on {serverName}");
             await localGroupOperator.modifyLocalGroup.SyncModifiedGroups(serverName, changedLocalGroups.LocalGroupsToUpdate);
 
-            LoggerSingleton.General.Info($"Finished synchronizing groups on server {serverName}.");
-            LoggerSingleton.SynchronizedLocalGroups.Info($"Finished synchronizing groups on server {serverName}.");
+            LoggerSingleton.General.Info($"Finished synchronizing local groups on server {serverName}.");
+            LoggerSingleton.SynchronizedLocalGroups.Info($"Finished synchronizing local groups on server {serverName}.");
 
             return addedGroups;
         }

@@ -38,8 +38,11 @@ namespace SynchronizerLibrary.DataBuffer
 
                         if (!obj.Value.Status)
                         {
-                            databaseStatusUpdater[key].UnsynchronizedServers += name;
-                            databaseStatusUpdater[key].UnsynchronizedServers += ";";
+                            if (!UnsuccessfulEmail.uncompletedMessages.Contains(obj.Value.StatusMessage))
+                            {
+                                databaseStatusUpdater[key].UnsynchronizedServers += name;
+                                databaseStatusUpdater[key].UnsynchronizedServers += ";";
+                            }
                             databaseStatusUpdater[key].FailedStatuses += obj.Value.StatusMessage;
                             databaseStatusUpdater[key].FailedStatuses += ";";
                         }
@@ -80,7 +83,7 @@ namespace SynchronizerLibrary.DataBuffer
                         _UpdateDatabase(obj, db);
 
                         emailParser.Send();
-                        if (!sendEmail) emailParser.cacheSpams();
+                        emailParser.cacheSpams();
                     }
                     else
                     {
@@ -179,10 +182,17 @@ namespace SynchronizerLibrary.DataBuffer
                 {
                     if (email) return true;
 
-                    if (temp[cacheKey].counter == 255)
+                    if (temp[cacheKey].counter >= 10)
+                    {
                         return false;
+                    }
                     else
+                    {
+                        temp[cacheKey].counter++;
+                        var updatedJson = Newtonsoft.Json.JsonConvert.SerializeObject(temp, Newtonsoft.Json.Formatting.Indented);
+                        System.IO.File.WriteAllText(path, updatedJson);
                         return true;
+                    }
                 }
                 else
                     return false;
@@ -204,7 +214,7 @@ namespace SynchronizerLibrary.DataBuffer
                 {
                     this.counter = temp[cacheKey].counter;
                     this.counter++;
-                    if (this.counter > 255)
+                    if (this.counter > 10)
                     {
                         this.counter = 1;
                     }

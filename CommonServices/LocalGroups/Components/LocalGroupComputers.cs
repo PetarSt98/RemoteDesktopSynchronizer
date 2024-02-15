@@ -31,6 +31,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Components
         {
             bool success;
             LoggerSingleton.SynchronizedLocalGroups.Info($"Adding new computer '{computerName}' to the group '{groupName}' on gateway '{serverName}'.");
+            Console.WriteLine($"Adding new computer '{computerName}' to the group '{groupName}' on gateway '{serverName}'.");
             try
             {
                 var i = 0;
@@ -102,6 +103,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Components
             //string username = "";
             //string password = "";
             LoggerSingleton.SynchronizedLocalGroups.Info($"Deleting computer '{computerName}' from the group '{groupName}' on gateway '{serverName}'.");
+            Console.WriteLine($"Deleting computer '{computerName}' from the group '{groupName}' on gateway '{serverName}'.");
             try
             {
                 try
