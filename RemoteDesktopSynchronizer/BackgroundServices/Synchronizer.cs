@@ -26,14 +26,15 @@ namespace RemoteDesktopCleaner.BackgroundServices
                 Console.WriteLine($"Starting the synchronization of '{serverName}' gateway.\n");
                 var cfgDiscrepancy = await GetConfigDiscrepancy(serverName);
                 var changedLocalGroups = FilterChangedLocalGroups(cfgDiscrepancy.LocalGroups);
-                Console.WriteLine("lala");
+                Console.WriteLine($"Synchronizing LGs on {serverName}");
                 var addedGroups = await _gatewayLocalGroupSynchronizer.SyncLocalGroups(changedLocalGroups, serverName);
 
                 LoggerSingleton.General.Info($"Finished getting gateway RAP names for '{serverName}'.");
 
+                Console.WriteLine($"Synchronizing RAPSs on {serverName}");
                 await _gatewayRapSynchronizer.SynchronizeRaps(serverName, changedLocalGroups.LocalGroupsToAdd.Where(lg => lg.Name.StartsWith("LG-")).Select(lg => lg.Name).ToList(), new List<string>(), new List<string>());
 
-                LoggerSingleton.General.Info("Finished synchronization");
+                LoggerSingleton.General.Info($"Finished synchronization on {serverName}");
             }
             catch (Exception ex)
             {
@@ -83,7 +84,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
                 result.Add(lg);
             }
 
-            var diff = new GatewayConfig("cerngt01");
+            var diff = new GatewayConfig(serverName);
             diff.Add(result);
             return diff;
         }
@@ -339,6 +340,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
         private bool IsResourceValid(rap_resource resource)
         {
             return !resource.toDelete && resource.access && resource.invalid.HasValue && !resource.invalid.Value;
+            //return !resource.toDelete && resource.invalid.HasValue && !resource.invalid.Value;
         }
 
         private bool IsResourceRemovable(rap_resource resource)

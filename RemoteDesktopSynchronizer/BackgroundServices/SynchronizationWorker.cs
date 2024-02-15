@@ -37,7 +37,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             LoggerSingleton.General.Info("Cleaner Worker is starting.");
-            var gateways = AppConfig.GetGatewaysInUse();
+            var gatewaysToSynchronize = AppConfig.GetGatewaysInUse();
             stoppingToken.Register(() => LoggerSingleton.General.Info("CleanerWorker background task is stopping."));
             //while (!stoppingToken.IsCancellationRequested) 
             //{
@@ -46,8 +46,8 @@ namespace RemoteDesktopCleaner.BackgroundServices
                 var raps = new List<rap>();
 
 
-                var gatewaysToSynchronize = new List<string> { "cerngt01", "cerngt05", "cerngt06", "cerngt07" };
-
+                //var gatewaysToSynchronize = new List<string> { "cerngt01", "cerngt05", "cerngt06", "cerngt07" };
+                //var gatewaysToSynchronize = new List<string> { "cerngt01"};
                 var tasks = new List<Task>();
 
                 foreach (var gatewayName in gatewaysToSynchronize)

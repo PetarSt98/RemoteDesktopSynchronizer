@@ -27,8 +27,7 @@ namespace RemoteDesktopCleaner
 
         public static string GetInfoDir()
         {
-            //return @"C:\Users\olindena\cernbox\WINDOWS\Desktop\TSGatewayWebServ\info";
-            return ConfigurationManager.AppSettings["info-directory"];
+            return @".\info";
         }
 
         public static string GetSyncLogDir()
