@@ -38,7 +38,7 @@ namespace SynchronizerLibrary.DataBuffer
 
                         if (!obj.Value.Status)
                         {
-                            if (!UnsuccessfulEmail.uncompletedMessages.Contains(obj.Value.StatusMessage))
+                            if (!UnsuccessfulEmail.uncompletedMessages.Contains(obj.Value.StatusMessage) && !UnsuccessfulEmail.uncompletedMessages.Contains($"{obj.Value.StatusMessage};"))
                             {
                                 databaseStatusUpdater[key].UnsynchronizedServers += name;
                                 databaseStatusUpdater[key].UnsynchronizedServers += ";";
@@ -54,8 +54,11 @@ namespace SynchronizerLibrary.DataBuffer
 
                         if (!obj.Value.Status)
                         {
-                            databaseStatusUpdater[key].UnsynchronizedServers += name;
-                            databaseStatusUpdater[key].UnsynchronizedServers += ";";
+                            if (!UnsuccessfulEmail.uncompletedMessages.Contains(obj.Value.StatusMessage) && !UnsuccessfulEmail.uncompletedMessages.Contains($"{obj.Value.StatusMessage};"))
+                            {
+                                databaseStatusUpdater[key].UnsynchronizedServers += name;
+                                databaseStatusUpdater[key].UnsynchronizedServers += ";";
+                            }
                             databaseStatusUpdater[key].FailedStatuses += obj.Value.StatusMessage;
                             databaseStatusUpdater[key].FailedStatuses += ";";
                         }

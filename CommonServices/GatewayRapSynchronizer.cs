@@ -270,7 +270,6 @@ namespace SynchronizerLibrary.CommonServices
                                     else
                                     {
                                         LoggerSingleton.SynchronizedRaps.Error($"Error creating RAP: '{rapName}'. Reason: {(uint)outParameters["ReturnValue"]}.");
-                                        GlobalInstance.Instance.UpdateObjectsStatus(serverName, groupName, false, "False RAP addition");
                                     }
                                         // Operation failed but was executed
                                 }
@@ -283,7 +282,7 @@ namespace SynchronizerLibrary.CommonServices
 
                         thread.Start();
 
-                        if (!thread.Join(TimeSpan.FromMinutes(4))) // Wait for 4 seconds
+                        if (!thread.Join(TimeSpan.FromMinutes(3))) // Wait for 4 seconds
                         {
                             try
                             {
@@ -305,6 +304,10 @@ namespace SynchronizerLibrary.CommonServices
                         {
                             Console.WriteLine($"Retrying '{rapName}' (Attempt {attempt + 1}/{maxRetries})");
                         }
+                    }
+                    if (!iterationSuccess)
+                    {
+                        GlobalInstance.Instance.UpdateObjectsStatus(serverName, ConvertToLgName(rapName), false, "False RAP addition");
                     }
                     globalSuccess &= iterationSuccess;
                      // If after max retries the operation didn't succeed, return false
