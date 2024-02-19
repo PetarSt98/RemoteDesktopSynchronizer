@@ -232,7 +232,6 @@ namespace SynchronizerLibrary.CommonServices
                 inParameters["PortNumbers"] = "3389";
 
                 int maxRetries = 5;
-                TimeSpan operationTimeout = TimeSpan.FromMinutes(4);
                 bool globalSuccess = true;
                 foreach (var rapName in missingRapNames)
                 {
@@ -240,10 +239,10 @@ namespace SynchronizerLibrary.CommonServices
                     for (int attempt = 0; attempt < maxRetries; attempt++)
                     {
                         bool success = false;
-                        var cts = new CancellationTokenSource(operationTimeout);
-                        try
+
+                        var thread = new Thread(() =>
                         {
-                            var task = Task.Run(() =>
+                            try
                             {
                                 // Place the original operation here
                                 LoggerSingleton.SynchronizedRaps.Info($"Adding new RAP '{rapName}' to the gateway '{serverName}'.");
@@ -258,43 +257,50 @@ namespace SynchronizerLibrary.CommonServices
                                 {
                                     Console.WriteLine($"{rapName} created.");
                                     LoggerSingleton.SynchronizedRaps.Info($"RAP '{rapName}' added to the gateway '{serverName}'.");
-                                    return true; // Operation succeeded
+                                    success = true; // Operation succeeded
                                 }
                                 else
                                 {
+                                    success = false;
                                     if ((uint)outParameters["ReturnValue"] == 2147749913)
                                     {
                                         LoggerSingleton.SynchronizedRaps.Warn($"RAP '{rapName}' already exists.");
-                                        return true;
+                                        success = true;
                                     }
                                     else
                                     {
                                         LoggerSingleton.SynchronizedRaps.Error($"Error creating RAP: '{rapName}'. Reason: {(uint)outParameters["ReturnValue"]}.");
                                         GlobalInstance.Instance.UpdateObjectsStatus(serverName, groupName, false, "False RAP addition");
                                     }
-                                    return false; // Operation failed but was executed
+                                        // Operation failed but was executed
                                 }
-                            }, cts.Token);
+                            }
+                            catch (ThreadAbortException)
+                            {
+                                Thread.ResetAbort(); // Cleanup if needed
+                            }
+                        });
 
-                            success = await task;
-                            iterationSuccess |= success;
-                            if (success) break; // If operation succeeded, move to the next rapName
-                        }
-                        catch (OperationCanceledException)
+                        thread.Start();
+
+                        if (!thread.Join(TimeSpan.FromMinutes(4))) // Wait for 4 seconds
                         {
-                            Console.WriteLine($"Operation for '{rapName}' timed out.");
-                            LoggerSingleton.SynchronizedRaps.Error($"Error creating RAP: '{rapName}'. Reason: Timeout. Try {attempt} ");
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"An error occurred for '{rapName}': {ex.Message}");
-                            LoggerSingleton.SynchronizedRaps.Error($"Error creating RAP: '{rapName}'. Reason: {ex.Message}. Try {attempt} ");
-                        }
-                        finally
-                        {
-                            cts.Dispose();
+                            try
+                            {
+                                thread.Abort(); // Attempt to abort the thread
+                                LoggerSingleton.SynchronizedRaps.Error($"Adding RAP policy timedout: '{rapName}'.");
+                                Console.Write($"Adding RAP policy timedout: '{rapName}'.");
+                            }
+                            catch (PlatformNotSupportedException)
+                            {
+                                LoggerSingleton.SynchronizedRaps.Error($"Failed abborting RAP policy thread due to timedout: '{rapName}'.");
+                                Console.Write($"Failed abborting RAP policy thread due to timedout: '{rapName}'.");
+                            }
                         }
 
+                        iterationSuccess |= success;
+                        if (success) break; // If operation succeeded, move to the next rapName
+                        
                         if (!success)
                         {
                             Console.WriteLine($"Retrying '{rapName}' (Attempt {attempt + 1}/{maxRetries})");
