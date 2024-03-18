@@ -3,6 +3,7 @@ using RemoteDesktopCleaner.BackgroundServices;
 using SynchronizerLibrary.Loggers;
 using SynchronizerLibrary.CommonServices;
 using Microsoft.Extensions.Hosting;
+using System.Security;
 
 namespace RemoteDesktopCleaner
 {
@@ -12,6 +13,7 @@ namespace RemoteDesktopCleaner
         {
             try
             {
+                CheckCleanerStatus();
                 EnsureDirectoriesExist();
 
                 LoggerSingleton.General.Info($"Starting RemoteDesktopClearner console app");
@@ -56,6 +58,36 @@ namespace RemoteDesktopCleaner
                 }
             }
         }
+
+        private static void CheckCleanerStatus()
+        {
+            try
+            {
+                string variableName = "CLEANER_STATUS";
+
+                string value = Environment.GetEnvironmentVariable(variableName, EnvironmentVariableTarget.Machine);
+
+                if (value != null)
+                {
+                    Console.WriteLine($"Cleaner is {value}");
+
+                    if (value == "ON")
+                    {
+                        Console.WriteLine("Warning: Cleaner is ON.");
+                        Environment.Exit(1);
+                    }
+
+                }
+
+                Console.WriteLine($"Continue with Synchronization.");
+            }
+            catch (SecurityException)
+            {
+                Console.WriteLine("Error: Administrative privileges are required to modify system environment variables.");
+                Environment.Exit(1);
+            }
+        }
+
         private static void ConfigureServices(IServiceCollection services)
         {
             LoggerSingleton.General.Info("Configuring services");
