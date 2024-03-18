@@ -106,8 +106,10 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Operations
                 {
                     if (ex.ErrorCode == -2147022675 || ex.ErrorCode == -2147022676) // Group not found.
                     {
-                        LoggerSingleton.SynchronizedLocalGroups.Debug($"Group already exists: '{groupName}' on gateway: '{server}'.");
+                        Console.WriteLine("Error in group check");
+                        LoggerSingleton.SynchronizedLocalGroups.Debug($"Group does not exist: '{groupName}' on gateway: '{server}'.");
                         groupExists = false;
+
                     }
                     else
                     {
@@ -122,7 +124,8 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Operations
                 }
                 else
                 {
-                    _ = LocalGroupOrphanedSID.RemoveOrphanedSids(newGroup, lg);
+                    Console.WriteLine($"Deleting SID from existing LG on {server} in group {groupName}");
+                    _ = LocalGroupOrphanedSID.RemoveOrphanedSids(newGroup, lg, server);
                 }
             }
             catch (Exception ex)
