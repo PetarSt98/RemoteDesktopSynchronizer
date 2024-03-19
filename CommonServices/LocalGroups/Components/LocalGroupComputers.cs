@@ -70,6 +70,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Components
                         LoggerSingleton.SynchronizedLocalGroups.Warn(ex.InnerException != null ? ex.InnerException.Message : ex.Message);
                         LoggerSingleton.SynchronizedLocalGroups.Warn($"Local Group name: {groupName}, unsuccessful adding computer: {computerName}");
                         LoggerSingleton.SynchronizedLocalGroups.Warn($"Computer '{computerName}' does not exist or is not accessible on gateway '{serverName}'.");
+                        LoggerSingleton.Errors.Error($"{serverName}: Failed to add device {computerName} to Local Group {groupName}");
                     }
                 }
                 //GlobalInstance.Instance.ObjectLists[serverName].Add(new RAP_ResourceStatus
@@ -124,6 +125,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Components
             catch (Exception ex)
             {
                 LoggerSingleton.SynchronizedLocalGroups.Error(ex, $"Error while adding member '{computerName}' to group '{groupName}' on gateway '{serverName}'.");
+                LoggerSingleton.Errors.Error($"{serverName}: Failed to remove device {computerName} from Local Group {groupName}");
                 success = false;
             }
 
