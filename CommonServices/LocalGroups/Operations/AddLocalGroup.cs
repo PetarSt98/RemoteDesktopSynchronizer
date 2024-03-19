@@ -121,6 +121,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Operations
                 {
                     newGroup = ad.Children.Add(groupName, "group");
                     newGroup.CommitChanges();
+                    LoggerSingleton.Reports.Info($"{server}: Added new Local Group: {groupName}");
                 }
                 else
                 {
@@ -131,6 +132,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Operations
             catch (Exception ex)
             {
                 LoggerSingleton.SynchronizedLocalGroups.Error(ex, $"Error adding empty group: '{groupName}' on gateway: '{server}'.");
+                LoggerSingleton.Errors.Error($"{server}: Failed to add new Local Group: {groupName}");
                 newGroup = null;
             }
 

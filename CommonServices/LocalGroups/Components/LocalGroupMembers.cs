@@ -56,6 +56,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Components
                 {
                     groupEntry.Invoke("Remove", $"WinNT://{memberName}");
                     groupEntry.CommitChanges();
+                    LoggerSingleton.Reports.Info($"{serverName}: Removed memeber {memberName} from Local Group {groupName}");
                 }
                 catch (System.Reflection.TargetInvocationException ex)
                 {
@@ -63,6 +64,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Components
                     {
                         groupEntry.Invoke("Remove", $"WinNT://CERN/{memberName},user");
                         groupEntry.CommitChanges();
+                        LoggerSingleton.Reports.Info($"{serverName}: Removed memeber {memberName} from Local Group {groupName}");
                     }
                     catch (System.Reflection.TargetInvocationException ex2)
                     {
@@ -84,6 +86,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Components
             catch (Exception ex)
             {
                 LoggerSingleton.SynchronizedLocalGroups.Error(ex, $"Error while adding member '{memberName}' to group '{groupName}' on gateway '{serverName}'.");
+                LoggerSingleton.Errors.Error($"{serverName}: Failed to remove memeber {memberName} from Local Group {groupName}");
                 success = false;
             }
 
@@ -103,6 +106,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Components
                 {
                     groupEntry.Invoke("Add", $"WinNT://{memberName}");
                     groupEntry.CommitChanges();
+                    LoggerSingleton.Reports.Info($"{serverName}: Added memeber {memberName} to Local Group: {groupName}");
                 }
                 catch (System.Reflection.TargetInvocationException ex)
                 {
@@ -110,6 +114,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Components
                     {
                         groupEntry.Invoke("Add", $"WinNT://CERN/{memberName},user");
                         groupEntry.CommitChanges();
+                        LoggerSingleton.Reports.Info($"{serverName}: Added memeber {memberName} to Local Group {groupName}");
                     }
                     catch (System.Reflection.TargetInvocationException ex2)
                     {
@@ -131,6 +136,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Components
             catch (Exception ex)
             {
                 LoggerSingleton.SynchronizedLocalGroups.Error(ex, $"Error while adding member '{memberName}' to group '{groupName}' on gateway '{serverName}'.");
+                LoggerSingleton.Errors.Error($"{serverName}: Failed to add memeber {memberName} to Local Group: {groupName}");
                 success = false;
             }
 

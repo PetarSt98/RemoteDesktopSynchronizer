@@ -45,11 +45,13 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Components
                     LoggerSingleton.SynchronizedLocalGroups.Info($"Removing SID: '{member.Name}'.");
                     groupPrincipal.Invoke("Remove", $"WinNT://{member.Name}");
                     Console.WriteLine($"Successfully removed SID: '{member.Name}'.");
+                    LoggerSingleton.Reports.Info($"{serverName}: Removed Orphaned SID {member.Name} from: {lg.Name}");
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Failed removing SID: '{member.Name}'.");
                     LoggerSingleton.SynchronizedLocalGroups.Error(ex, $"Failed removing SID: '{member.Name}'.");
+                    LoggerSingleton.Errors.Error($"{serverName}: Failed to remove Orphaned SID {member} from: {lg.Name}");
                     success = false;
                 }
 
@@ -66,11 +68,13 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Components
                     try
                     {
                         groupPrincipal.Invoke("Remove", $"WinNT://{member}");
+                        LoggerSingleton.Reports.Info($"{serverName}: Removed Orphaned SID {member} from: {lg.Name}");
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Failed removing SID: '{member}'.");
                         LoggerSingleton.SynchronizedLocalGroups.Error(ex, $"Failed removing SID: '{member}'.");
+                        LoggerSingleton.Errors.Error($"{serverName}: Failed to remove Orphaned SID {member} from: {lg.Name}");
                         success = false;
                     }
                 }

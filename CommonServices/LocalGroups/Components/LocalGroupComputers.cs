@@ -45,6 +45,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Components
                         {
                             groupEntry.Invoke("Add", $"WinNT://CERN/{computerName},computer");
                             groupEntry.CommitChanges();
+                            LoggerSingleton.Reports.Info($"{serverName}: Added device {computerName} to Local Group {groupName}");
                             break;
                         }
                         else
@@ -110,6 +111,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Components
                 {
                     groupEntry.Invoke("Remove", $"WinNT://CERN/{computerName},computer");
                     groupEntry.CommitChanges();
+                    LoggerSingleton.Reports.Info($"{serverName}: Removed device {computerName} from Local Group {groupName}");
                 }
                 catch (System.Reflection.TargetInvocationException ex)
                 {

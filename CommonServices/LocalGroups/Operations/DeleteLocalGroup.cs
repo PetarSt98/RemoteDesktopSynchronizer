@@ -70,12 +70,14 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Operations
                 {
                     ad.Children.Remove(newGroup);
                     success = true;
+                    LoggerSingleton.Reports.Info($"{server}: Removed Local Group: {groupName}");
                 }
             }
             catch (Exception ex)
             {
                 success = false;
                 LoggerSingleton.SynchronizedLocalGroups.Error(ex, $"Error while deleting group: '{groupName}' from gateway: '{server}'.");
+                LoggerSingleton.Errors.Error($"{server}: Failed to remove Local Group: {groupName}");
             }
 
             return success;

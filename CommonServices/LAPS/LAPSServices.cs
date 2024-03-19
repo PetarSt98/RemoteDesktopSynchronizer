@@ -87,7 +87,7 @@ namespace SynchronizerLibrary.CommonServices.LAPS
             return false;  // Member does not exist
         }
 
-        private void AddorRemoveUserToRemoteDesktopUsersGroup(DirectoryEntry groupEntry, string domain, string userName, string lapsOperator)
+        private void AddorRemoveUserToRemoteDesktopUsersGroup(DirectoryEntry groupEntry, string domain, string userName, string lapsOperator, string machineName)
         {
             try
             {
@@ -97,6 +97,7 @@ namespace SynchronizerLibrary.CommonServices.LAPS
                     {
                         groupEntry.Invoke("Add", $"WinNT://{domain}/{userName}");
                         groupEntry.CommitChanges();
+                        LoggerSingleton.Reports.Info($"Added user {userName} to Remote Desktop Users Group on {machineName}");
                     }
                 }
                 if (lapsOperator == "Remove")
@@ -105,6 +106,7 @@ namespace SynchronizerLibrary.CommonServices.LAPS
                     {
                         groupEntry.Invoke("Remove", $"WinNT://{domain}/{userName}");
                         groupEntry.CommitChanges();
+                        LoggerSingleton.Reports.Info($"Removed user {userName} from Remote Desktop Users Group on {machineName}");
                     }
                 }
             }
@@ -193,7 +195,7 @@ namespace SynchronizerLibrary.CommonServices.LAPS
                             Console.WriteLine(statusMessage);
                             return (false, statusMessage);
                         }
-                        AddorRemoveUserToRemoteDesktopUsersGroup(remoteDesktopGroup, domain, newUser, lapsOperator);
+                        AddorRemoveUserToRemoteDesktopUsersGroup(remoteDesktopGroup, domain, newUser, lapsOperator, machineName);
                     }
                 }
                 else

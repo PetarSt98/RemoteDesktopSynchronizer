@@ -258,6 +258,7 @@ namespace SynchronizerLibrary.CommonServices
                                     Console.WriteLine($"{rapName} created.");
                                     LoggerSingleton.SynchronizedRaps.Info($"RAP '{rapName}' added to the gateway '{serverName}'.");
                                     success = true; // Operation succeeded
+                                    LoggerSingleton.Reports.Info($"{serverName}: Added new RAP: {rapName}");
                                 }
                                 else
                                 {
@@ -270,6 +271,7 @@ namespace SynchronizerLibrary.CommonServices
                                     else
                                     {
                                         LoggerSingleton.SynchronizedRaps.Error($"Error creating RAP: '{rapName}'. Reason: {(uint)outParameters["ReturnValue"]}.");
+                                        LoggerSingleton.Errors.Error($"{serverName}: Failed to add new RAP: {rapName}");
                                     }
                                         // Operation failed but was executed
                                 }
@@ -356,7 +358,7 @@ namespace SynchronizerLibrary.CommonServices
                 {
                     var rapName = rapInstance.CimInstanceProperties["Name"].Value.ToString();
                     if (!rapNamesToDelete.Contains(rapName)) continue;
-                    var rapDeletion = await DeleteRap(mySession, rapInstance, rapName);
+                    var rapDeletion = await DeleteRap(mySession, rapInstance, rapName, serverName);
                     result.Add(rapDeletion);
                 }
             }
@@ -383,7 +385,7 @@ namespace SynchronizerLibrary.CommonServices
             }
             return sb.ToString();
         }
-        private async Task<RapsDeletionResponse> DeleteRap(CimSession mySession, CimInstance rapInstance, string rapName)
+        private async Task<RapsDeletionResponse> DeleteRap(CimSession mySession, CimInstance rapInstance, string rapName, string serverName)
         {
             var rapDeletion = new RapsDeletionResponse(rapName);
             try
@@ -393,6 +395,7 @@ namespace SynchronizerLibrary.CommonServices
                 {
                     rapDeletion.Deleted = true;
                     LoggerSingleton.SynchronizedRaps.Info($"Deleted RAP '{rapName}'.");
+                    LoggerSingleton.Reports.Info($"{serverName}: Deleted RAP: {rapName}");
                 }
             }
             catch (CimException ex) // catch only CIM exceptions
@@ -405,6 +408,7 @@ namespace SynchronizerLibrary.CommonServices
                 else // handle all other CIM exceptions
                 {
                     LoggerSingleton.SynchronizedRaps.Error(ex, $"Error deleting RAP '{rapName}'.");
+                    LoggerSingleton.Errors.Error($"{serverName}: Failed to delete RAP: {rapName}");
                 }
             }
             catch (Exception ex)
