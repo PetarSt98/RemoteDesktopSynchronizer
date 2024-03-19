@@ -35,18 +35,19 @@ namespace RemoteDesktopCleaner
                 Console.Error.WriteLine(ex.Message);
             }
         }
+
         public static IHostBuilder CreateHostBuilder(string[] args) =>
-    Host.CreateDefaultBuilder(args)
-        .ConfigureServices((hostContext, services) =>
-        {
-                    // Register your services and background tasks
-                    ConfigureServices(services);
-            services.AddHostedService<SynchronizationWorker>();
-        });
+            Host.CreateDefaultBuilder(args)
+                .ConfigureServices((hostContext, services) =>
+                    {
+                        ConfigureServices(services);
+                        services.AddHostedService<SynchronizationWorker>();
+                    }
+        );
 
         private static void EnsureDirectoriesExist()
         {
-            string[] directories = { "Logs", "Info", "Cache" };
+            string[] directories = { "Logs", "Info", "Cache", "Reports" };
 
             foreach (var directory in directories)
             {
@@ -55,6 +56,37 @@ namespace RemoteDesktopCleaner
                 if (!Directory.Exists(directoryPath))
                 {
                     Directory.CreateDirectory(directoryPath);
+                }
+
+                if (directory == "Logs")
+                {
+                    DeleteOldFiles(directoryPath, 15);
+                }
+
+                if (directory == "Reports")
+                {
+                    DeleteOldFiles(directoryPath, 30);
+                }
+            }
+        }
+
+        private static void DeleteOldFiles(string directoryPath, int daysOld)
+        {
+            var files = Directory.GetFiles(directoryPath);
+
+            foreach (var file in files)
+            {
+                try
+                {
+                    var creationTime = File.GetCreationTime(file);
+                    if ((DateTime.Now - creationTime).TotalDays > daysOld)
+                    {
+                        File.Delete(file);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error deleting file {file}: {ex.Message}");
                 }
             }
         }
