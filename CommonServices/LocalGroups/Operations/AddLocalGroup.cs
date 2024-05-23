@@ -71,7 +71,7 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Operations
                 if (!localGroupComputers.SyncComputers(newGroup, lg, server))
                     success = false;
                 if (! await lapsService.SyncLAPS(server, lg))
-                    success = false;
+                    Console.WriteLine($"LAPS FAILED");
 
                 newGroup.CommitChanges();
             }

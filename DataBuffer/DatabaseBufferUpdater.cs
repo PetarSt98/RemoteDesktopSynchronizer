@@ -2,9 +2,7 @@
 using System.Text.Json;
 using SynchronizerLibrary.EmailService;
 using Microsoft.EntityFrameworkCore;
-
-
-
+using SynchronizerLibrary.Loggers;
 
 namespace SynchronizerLibrary.DataBuffer
 {
@@ -69,35 +67,52 @@ namespace SynchronizerLibrary.DataBuffer
 
         public void UpdateDatabase()
         {
-            bool sendEmail = true;
+            bool sendEmail = false;
+            Console.WriteLine($"Sending Email: {sendEmail}");
             using (var db = new RapContext())
             {
                 foreach (var pair in databaseStatusUpdater.Zip(partialStatus, (item, partial) => (item, partial)))
                 {
-                    var obj = pair.item.Value;
-                    if (!pair.item.Value.Status && !pair.partial.Value)
+                    try
                     {
-                        emailParser = new UnsuccessfulEmail();
-                        emailParser.sendEmailFlag = sendEmail;
-                        emailParser.CheckEmailTemplate(obj);
+                        var obj = pair.item.Value;
+                        if (!pair.item.Value.Status && !pair.partial.Value)
+                        {
+                            emailParser = new UnsuccessfulEmail();
+                            emailParser.sendEmailFlag = sendEmail;
+                            emailParser.CheckEmailTemplate(obj);
 
-                        emailParser.PrepareEmail(obj, db);
+                            emailParser.PrepareEmail(obj, db);
 
-                        _UpdateDatabase(obj, db);
+                            _UpdateDatabase(obj, db);
 
-                        emailParser.Send();
-                        emailParser.cacheSpams();
+                            emailParser.Send();
+                            emailParser.cacheSpams();
+                            db.SaveChanges();
+                        }
+                        else
+                        {
+                            Console.WriteLine($"  ComputerName: {obj.ComputerName}, GroupName: {obj.GroupName}");
+                            emailParser = new SuccessfulEmail(obj, db);
+                            emailParser.sendEmailFlag = sendEmail;
+                            emailParser.PrepareEmail(obj, db);
+                            emailParser.Send();
+                            db.SaveChanges();
+
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        Console.WriteLine($"  ComputerName: {obj.ComputerName}, GroupName: {obj.GroupName}");
-                        emailParser = new SuccessfulEmail(obj, db);
-                        emailParser.sendEmailFlag = sendEmail;
-                        emailParser.PrepareEmail(obj, db);
-                        emailParser.Send();
-                        
+                        Console.WriteLine(ex.Message);
+                        LoggerSingleton.General.Error($"Error with sending an email for device {pair.item.Value.ComputerName} to user {pair.item.Value.GroupName} : {ex.Message}");
+                        var obj = pair.item.Value;
+                        if (!pair.item.Value.Status && !pair.partial.Value)
+                        {
+                            _UpdateDatabase(obj, db);
+                        }
+                        db.SaveChanges();
                     }
-                }
+                }  
                 db.SaveChanges();
             }
         }
@@ -141,6 +156,7 @@ namespace SynchronizerLibrary.DataBuffer
         public int counter { get; set; }
         private const string CacheFilePath = "Cache";
         private static string path = $".\\{CacheFilePath}\\cached_spam_failures.json";
+        private static readonly Mutex cacheFileMutex = new Mutex(false, "Global\\CacheFileMutex");
 
         public SpamFailureHandler(string deviceName, string userName)
         {
@@ -176,65 +192,88 @@ namespace SynchronizerLibrary.DataBuffer
             deviceName = GlobalInstance.ModifyComputerName(deviceName);
             string cacheKey = $"{userName}-{deviceName}";
 
-            if (File.Exists(path))
-            {
-                var content = File.ReadAllText(path);
-                var temp = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, SpamFailureHandler>>(content);
+            try {
+                cacheFileMutex.WaitOne();
 
-                if (temp.ContainsKey(cacheKey)) // kada sacuva json sjebe ga i nema imena itd
+                if (File.Exists(path))
                 {
-                    if (email) return true;
+                    var content = File.ReadAllText(path);
+                    var temp = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, SpamFailureHandler>>(content);
 
-                    if (temp[cacheKey].counter >= 10)
+                    if (temp.ContainsKey(cacheKey)) // kada sacuva json sjebe ga i nema imena itd
                     {
-                        return false;
+                        if (email) return true;
+
+                        if (temp[cacheKey].counter >= 10)
+                        {
+                            return false;
+                        }
+                        else
+                        {
+                            temp[cacheKey].counter++;
+                            var updatedJson = Newtonsoft.Json.JsonConvert.SerializeObject(temp, Newtonsoft.Json.Formatting.Indented);
+                            System.IO.File.WriteAllText(path, updatedJson);
+                            return true;
+                        }
                     }
                     else
-                    {
-                        temp[cacheKey].counter++;
-                        var updatedJson = Newtonsoft.Json.JsonConvert.SerializeObject(temp, Newtonsoft.Json.Formatting.Indented);
-                        System.IO.File.WriteAllText(path, updatedJson);
-                        return true;
-                    }
+                        return false;
                 }
                 else
+                {
                     return false;
-            }
-            else
+                }
+
+            }catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 return false;
             }
-
+            finally
+            {
+                cacheFileMutex.ReleaseMutex();
+            }
         }
 
         public void CacheSpam()
         {
-            if (File.Exists(path))
+            try
             {
-                var content = File.ReadAllText(path);
-                var temp = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, SpamFailureHandler>>(content);
-                if (temp.ContainsKey(this.cacheKey))
+                cacheFileMutex.WaitOne();
+                if (File.Exists(path))
                 {
-                    this.counter = temp[cacheKey].counter;
-                    this.counter++;
-                    if (this.counter > 10)
+                    var content = File.ReadAllText(path);
+                    var temp = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, SpamFailureHandler>>(content);
+                    if (temp.ContainsKey(this.cacheKey))
                     {
-                        this.counter = 1;
+                        this.counter = temp[cacheKey].counter;
+                        this.counter++;
+                        if (this.counter > 10)
+                        {
+                            this.counter = 1;
+                        }
                     }
+                    else
+                    {
+                        temp[cacheKey] = this;
+                    }
+
+                    temp[cacheKey].counter = this.counter;
+                    File.WriteAllText(path, JsonSerializer.Serialize(temp));
                 }
                 else
                 {
-                    temp[cacheKey] = this;
-                }    
-
-                temp[cacheKey].counter = this.counter;
-                File.WriteAllText(path, JsonSerializer.Serialize(temp));
+                    var temp = new Dictionary<string, SpamFailureHandler>();
+                    temp[this.cacheKey] = this;
+                    File.WriteAllText(path, JsonSerializer.Serialize(temp));
+                }
+            }catch(Exception ex)
+            { 
+                Console.WriteLine(ex.Message, ex);
             }
-            else
+            finally 
             {
-                var temp = new Dictionary<string, SpamFailureHandler>();
-                temp[this.cacheKey] = this;
-                File.WriteAllText(path, JsonSerializer.Serialize(temp));
+                cacheFileMutex.ReleaseMutex();
             }
         }
 

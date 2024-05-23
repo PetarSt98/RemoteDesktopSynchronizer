@@ -38,8 +38,10 @@ namespace SynchronizerLibrary.EmailService
 
         public void Send()
         {
-            if (!sendEmailFlag) return;
+            Console.WriteLine("Email Subject");
             Console.WriteLine(subject);
+            if (!sendEmailFlag) return;
+  
             if (!SpamFailureHandler.CheckStatus(remoteMachine, users, true))
             {
                 Console.WriteLine(subject);
@@ -56,7 +58,7 @@ namespace SynchronizerLibrary.EmailService
                 message.From = new MailAddress("noreply@cern.ch");
 
                 message.To.Add(new MailAddress(toAddress));
-                if (toAddressCC != null)
+                if (toAddressCC != null && toAddress.Length > 0)
                     message.CC.Add(new MailAddress(toAddressCC));
                 message.Bcc.Add(new MailAddress("cernts-tsgateway-admin@cern.ch"));
 
@@ -145,12 +147,21 @@ namespace SynchronizerLibrary.EmailService
 
                 // Now use the template as the body of your email
                 toAddress = obj.GroupName.Replace("LG-", "") + "@cern.ch";
-                //string toAddressCC = resource.resourceOwner.Replace(@"CERN\", "") + "@cern.ch";
+
                 toAddressCC = null;
-                if (deviceInfo["ResponsiblePersonUsername"].Length != 0)
+                if (deviceInfo["ResponsiblePersonUsername"] != null && deviceInfo["ResponsiblePersonUsername"].Length != 0)
                 {
                     toAddressCC = deviceInfo["ResponsiblePersonUsername"] + "@cern.ch";
                 }
+                else if(deviceInfo["ResponsiblePersonEmail"] != null && deviceInfo["ResponsiblePersonEmail"].Length != 0)
+                {
+                    toAddressCC = deviceInfo["ResponsiblePersonEmail"];
+                }
+                else
+                {
+                    toAddressCC = "";
+                }
+
                 body = template;
 
                 

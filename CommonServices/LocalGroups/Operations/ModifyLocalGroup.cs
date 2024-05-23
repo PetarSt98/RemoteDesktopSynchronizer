@@ -42,8 +42,9 @@ namespace SynchronizerLibrary.CommonServices.LocalGroups.Operations
 
                 if (!localGroupComputers.SyncComputers(localGroup, lg, server))
                     success = false;
-                if (! await lapsService.SyncLAPS(server, lg))
-                    success = false;
+                if (!await lapsService.SyncLAPS(server, lg))
+                    Console.WriteLine($"LAPS FAILED");
+                    //success = false;
             }
             else
             {
