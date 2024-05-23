@@ -39,6 +39,8 @@ namespace RemoteDesktopCleaner.BackgroundServices
             catch (Exception ex)
             {
                 LoggerSingleton.General.Error(ex, $"Error while synchronizing gateway: '{serverName}'.");
+                Console.WriteLine($"Error while synchronizing gateway: '{serverName}'.");
+                Console.WriteLine(ex);
             }
             Console.WriteLine($"Finished synchronization for gateway '{serverName}'.");
             LoggerSingleton.General.Info($"Finished synchronization for gateway '{serverName}'.");

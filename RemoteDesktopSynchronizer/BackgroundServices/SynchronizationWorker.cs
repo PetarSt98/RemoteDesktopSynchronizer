@@ -52,6 +52,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
                  
                 foreach (var gatewayName in gatewaysToSynchronize)
                 {
+                    Console.WriteLine($"Starting the synchronization on gateway: {gatewayName}");
                     GlobalInstance.Instance.Names.Add(gatewayName);
                     GlobalInstance.Instance.ObjectLists[gatewayName] = new ConcurrentDictionary<string, RAP_ResourceStatus>();
                     tasks.Add(Task.Run(() => _synchronizer.SynchronizeAsync(gatewayName)));
@@ -59,7 +60,7 @@ namespace RemoteDesktopCleaner.BackgroundServices
 
                 // Asynchronously wait for all tasks to complete
                 await Task.WhenAll(tasks);
-                Console.WriteLine("TEST\n");
+
                 //foreach (var gatewayName in gatewaysToSynchronize)
                 //{
 
