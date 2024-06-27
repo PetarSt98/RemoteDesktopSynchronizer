@@ -31,6 +31,10 @@ namespace SynchronizerLibrary
             return ConfigurationManager.AppSettings["info-directory"];
         }
 
+        public static bool GetEmailFlag()
+        {
+            return ConfigurationManager.AppSettings["send-email"] == "true" ? true : false;
+        }
         public static string GetSyncLogDir()
         {
             return $@"{GetInfoDir()}\SyncLogs";

@@ -42,6 +42,8 @@ namespace SynchronizerLibrary.Data
 
         public string unsynchronizedGateways { get; set; }
 
+        public bool alias { get; set; }
+
         public virtual rap rap { get; set; }
         public override string ToString()
         {

@@ -67,12 +67,35 @@ namespace SynchronizerLibrary.DataBuffer
 
         public void UpdateDatabase()
         {
-            bool sendEmail = false;
+            bool sendEmail = AppConfig.GetEmailFlag();
             Console.WriteLine($"Sending Email: {sendEmail}");
             using (var db = new RapContext())
             {
                 foreach (var pair in databaseStatusUpdater.Zip(partialStatus, (item, partial) => (item, partial)))
                 {
+                    sendEmail = AppConfig.GetEmailFlag();
+
+                    try
+                    {
+                        Console.WriteLine($"Alias check, user: {pair.item.Value.GroupName.Replace("LG-", "")} , machine: {pair.item.Value.ComputerName}");
+                        var aliases = db.rap_resource
+                            .Where(r => (r.resourceName == pair.item.Value.ComputerName && r.alias && r.RAPName == ("RAP_" + pair.item.Value.GroupName.Replace("LG-", ""))))
+                            .ToList();
+
+                        if (aliases.Count > 0)
+                        {
+                            Console.WriteLine($"Machine {pair.item.Value.ComputerName} is alias, skippings Email.");
+                            LoggerSingleton.General.Info($"Machine {pair.item.Value.ComputerName} is alias, skippings Email.");
+                            LoggerSingleton.SynchronizedLocalGroups.Info($"Machine {pair.item.Value.ComputerName} is alias, skippings Email.");
+                            sendEmail = false;
+                        }
+                        
+                    } catch (Exception ex)
+                    {
+                        Console.WriteLine($"Failed to determine if machine {pair.item.Value.ComputerName} is alias.");
+                        LoggerSingleton.General.Error($"Failed to determine if machine {pair.item.Value.ComputerName} is alias.");
+                    }
+
                     try
                     {
                         var obj = pair.item.Value;

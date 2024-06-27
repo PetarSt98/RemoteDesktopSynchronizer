@@ -4,7 +4,7 @@ using SynchronizerLibrary.SOAPservices;
 using SynchronizerLibrary.CommonServices.LocalGroups;
 using SynchronizerLibrary.Loggers;
 using SynchronizerLibrary.DataBuffer;
-
+using SynchronizerLibrary.Data;
 
 namespace SynchronizerLibrary.CommonServices.LAPS
 {
@@ -161,6 +161,32 @@ namespace SynchronizerLibrary.CommonServices.LAPS
             if (lapsOperator != "Add" && lapsOperator != "Remove")
             {
                 throw new Exception($"Uknown LAPS operator: {lapsOperator} !");
+            }
+
+            try
+            {
+                Console.WriteLine($"Alias check, user: {newUser} , machine: {machineName}");
+                var db = new RapContext();
+                var aliases = db.rap_resource
+                    .Where(r => (r.resourceName == machineName && r.alias && r.RAPName == ("RAP_" + newUser)))
+                    .ToList();
+
+                if (aliases.Count > 0)
+                {
+                    Console.WriteLine($"Machine {machineName} is alias, skippings LAPS.");
+                    LoggerSingleton.General.Info($"Machine {machineName} is alias, skippings LAPS.");
+                    LoggerSingleton.SynchronizedLocalGroups.Info($"Machine {machineName} is alias, skippings LAPS.");
+                    return (true, "All ok");
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("Failed alias check!");
+                Console.WriteLine(ex.Message);
+                Loggers.LoggerSingleton.General.Error("Failed alias check!");
+                Loggers.LoggerSingleton.General.Error(ex.Message);
+                Loggers.LoggerSingleton.SynchronizedLocalGroups.Error("Failed alias check!");
+                Loggers.LoggerSingleton.SynchronizedLocalGroups.Error(ex.Message);
             }
 
             string lapsAttribute = "ms-Mcs-AdmPwd";
